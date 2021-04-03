@@ -1,0 +1,105 @@
+; Engine configuration file.
+; It's best edited using the editor UI and not directly,
+; since the parameters that go here are not all obvious.
+;
+; Format:
+;   [section] ; section goes between []
+;   param=value ; assign values to parameters
+
+config_version=4
+
+_global_script_classes=[ {
+"base": "Spatial",
+"class": "Chunk",
+"language": "GDScript",
+"path": "res://Chunk.gd"
+}, {
+"base": "Spatial",
+"class": "ChunkGen",
+"language": "GDScript",
+"path": "res://ChunkGen.gd"
+}, {
+"base": "Node",
+"class": "Map",
+"language": "GDScript",
+"path": "res://world/Map.gd"
+}, {
+"base": "Node",
+"class": "MapSettings",
+"language": "GDScript",
+"path": "res://world/MapSettings.gd"
+}, {
+"base": "Node",
+"class": "Ocean",
+"language": "GDScript",
+"path": "res://world/Ocean.gd"
+}, {
+"base": "Node",
+"class": "River",
+"language": "GDScript",
+"path": "res://world/River.gd"
+}, {
+"base": "Node",
+"class": "RiverRadiusTool",
+"language": "GDScript",
+"path": "res://RiverRadiusTool.gd"
+}, {
+"base": "Node",
+"class": "Save",
+"language": "GDScript",
+"path": "res://Save.gd"
+}, {
+"base": "Node",
+"class": "Vector2Edge",
+"language": "GDScript",
+"path": "res://tool/Vector2Edge.gd"
+} ]
+_global_script_class_icons={
+"Chunk": "",
+"ChunkGen": "",
+"Map": "",
+"MapSettings": "",
+"Ocean": "",
+"River": "",
+"RiverRadiusTool": "",
+"Save": "",
+"Vector2Edge": ""
+}
+
+[application]
+
+config/name="worldgen"
+run/main_scene="res://WorldOrig.tscn"
+config/icon="res://icon.png"
+
+[input]
+
+movement_forward={
+"deadzone": 0.5,
+"events": [ Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":0,"alt":false,"shift":false,"control":false,"meta":false,"command":false,"pressed":false,"scancode":87,"unicode":0,"echo":false,"script":null)
+ ]
+}
+movement_backward={
+"deadzone": 0.5,
+"events": [ Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":0,"alt":false,"shift":false,"control":false,"meta":false,"command":false,"pressed":false,"scancode":83,"unicode":0,"echo":false,"script":null)
+ ]
+}
+movement_left={
+"deadzone": 0.5,
+"events": [ Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":0,"alt":false,"shift":false,"control":false,"meta":false,"command":false,"pressed":false,"scancode":65,"unicode":0,"echo":false,"script":null)
+ ]
+}
+movement_right={
+"deadzone": 0.5,
+"events": [ Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":0,"alt":false,"shift":false,"control":false,"meta":false,"command":false,"pressed":false,"scancode":68,"unicode":0,"echo":false,"script":null)
+ ]
+}
+remove_terrain={
+"deadzone": 0.5,
+"events": [ Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":0,"alt":false,"shift":false,"control":false,"meta":false,"command":false,"pressed":false,"scancode":69,"unicode":0,"echo":false,"script":null)
+ ]
+}
+
+[rendering]
+
+environment/default_environment="res://default_env.tres"
