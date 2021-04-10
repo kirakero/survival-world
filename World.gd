@@ -21,7 +21,7 @@ func _ready():
 	noise.period = 240
 	thread = Thread.new()
 	
-	var config = preload("res://world/MapSettings.gd").new(2, Vector2(8, 8))
+	var config = preload("res://world/MapSettings.gd").new(2, Vector2(16, 8))
 	var map = preload("res://world/Map.gd").new(config)
 	map.generate()
 	

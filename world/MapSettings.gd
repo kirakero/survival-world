@@ -8,7 +8,7 @@ var randomseed
 var width
 var height
 
-var _SHALLOWS = 8
+var _SHALLOWS = 16
 var _DEEPENING = 1.2
 
 var H_WATER = 127
@@ -16,7 +16,8 @@ var H_DEEP = H_WATER - _SHALLOWS
 var H_OCEAN = H_WATER - 50
 
 var MAX_RIVER_DISTANCE = 1000
-var SPACING = 5
+var SPACING = 10
+var MAX_OCEAN_SIZE = 256
 var detection_rate = 64
 
 func _init(randomseed, chunk_dim: Vector2):
@@ -30,3 +31,6 @@ func _init(randomseed, chunk_dim: Vector2):
 
 func _spacing_snap(x, y):
 	return Vector2(int(x/SPACING)*SPACING, int(y/SPACING)*SPACING)
+
+func _debug():
+	print('::MapSettings ',[width, height])
