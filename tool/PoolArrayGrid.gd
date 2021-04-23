@@ -12,11 +12,11 @@ signal render_done
 signal command_done
 
 # Pool Array Grid
-func _init(x, y, init_val = 0, pa = PoolByteArray()):
+func _init(x, y, init_val = 0, _pa = PoolByteArray()):
 	if pa.size() == 0:
-		self.pa = resize_and_fill(pa, x * y, init_val)
+		self.pa = resize_and_fill(_pa, x * y, init_val)
 	else:
-		self.pa = pa
+		self.pa = _pa
 	size = Vector2(x, y)
 	
 func read(x, y):
@@ -40,21 +40,21 @@ func writev(coords, value):
 func hasv(coords: Vector2) -> bool:
 	return has(coords.x, coords.y)
 
-func resize_and_fill(pool, size:int, value=0):
-	if size < 1:
+func resize_and_fill(pool, _size:int, value=0):
+	if _size < 1:
 		return null
 	pool.resize(1)
 	pool[0]=value
-	while pool.size() << 1 <= size:
+	while pool.size() << 1 <= _size:
 		pool.append_array(pool)
-	if pool.size() < size:
-		pool.append_array(pool.subarray(0,size-pool.size()-1))
+	if pool.size() < _size:
+		pool.append_array(pool.subarray(0,_size-pool.size()-1))
 	return pool
 
 func clone():
 	return duplicate()
 
-func queue(shader: Shader, params: Dictionary = {}, iterations: int = 1) -> int:
+func queue_shader(shader: Shader, params: Dictionary = {}, iterations: int = 1) -> int:
 	queue.append({
 		"shader": shader,
 		"params": params,
@@ -109,8 +109,8 @@ func render(keep_renderer = false):
 			print('pa size is ', pa.size())
 	elif job.has('command'):
 		assert(not thread.is_active())
-		thread.start(self, "_run_command", [thread, job])
-		var res = yield(self, "command_done")
+		var _status = thread.start(self, "_run_command", [thread, job])
+		var _res = yield(self, "command_done")
 		shader_stale = true
 
 	if queue.size() > 0:
@@ -128,7 +128,7 @@ func _init_renderer():
 
 	renderer = Renderer.new(size)
 	renderer.set_image(img, tex)
-	add_child(renderer)
+	call_deferred("add_child", renderer)
 
 func _teardown_renderer():
 	remove_child(renderer)
@@ -136,19 +136,19 @@ func _teardown_renderer():
 	renderer = null
 
 func _run_command(cmd):
-	var thread = cmd[0]
+	var _thread = cmd[0]
 	var job = cmd[1]
 	var res = job['command'].new().run(self, job['params'])
 	job['iterations'] = job['iterations'] - 1
-	call_deferred('_end_command', thread, job, res)
+	call_deferred('_end_command', _thread, job, res)
 
-func _end_command(thread, job, res):
-	thread.wait_to_finish()
+func _end_command(_thread, job, res):
+	_thread.wait_to_finish()
 	if job['iterations'] < 1:
 		emit_signal("command_done", res)
 	else:
-		assert(not thread.is_active())
-		thread.start(self, "_run_command", [thread, job])
+		assert(not _thread.is_active())
+		_thread.start(self, "_run_command", [_thread, job])
 
 func flood_fill(origin: Vector2, value = null, low = 0, high = 255, spacing = 1) -> Array:
 	var array := []
@@ -176,6 +176,6 @@ func flood_fill(origin: Vector2, value = null, low = 0, high = 255, spacing = 1)
 			
 	return array
 
-func regrade(delta, minval, maxval):
-	for i in range(pa.size()):
-		pa[i] = clamp(pa[i] + delta, minval, maxval)
+#func regrade(delta, minval, maxval):
+#	for i in range(pa.size()):
+#		pa[i] = clamp(pa[i] + delta, minval, maxval)

@@ -4,22 +4,22 @@ class_name ImageData
 var pa: PoolByteArray
 var size: Vector2
 var renderer: Renderer
-var queue: Array = []
-var thread: Thread
+#var queue: Array = []
+#var thread: Thread
 var format
 
-var shader_stale = false
-signal render_done
-signal command_done
+#var shader_stale = false
+#signal render_done
+#signal command_done
 
 # Pool Array Grid
-func _init(size, format = Image.FORMAT_L8, init_val = 0, pa = PoolByteArray()):
+func _init(_size, _format = Image.FORMAT_RGBA8, init_val = 0, _pa = PoolByteArray(), _bitdepth = 4):
 	if pa.size() == 0:
-		self.pa = resize_and_fill(pa, size.x * size.y, init_val)
+		pa = resize_and_fill(_pa, int(_size.x) * int(_size.y) * _bitdepth, init_val)
 	else:
-		self.pa = pa
-	self.size = size
-	self.format = format
+		pa = _pa
+	size = _size
+	format = _format
 	
 func read(x, y):
 	var p = int(x) + int(y) * size.x
@@ -42,29 +42,29 @@ func writev(coords, value):
 func hasv(coords: Vector2) -> bool:
 	return has(coords.x, coords.y)
 
-func resize_and_fill(pool, size:int, value=0):
-	if size < 1:
+func resize_and_fill(pool, _size:int, value=0):
+	if _size < 1:
 		return null
 	pool.resize(1)
 	pool[0]=value
-	while pool.size() << 1 <= size:
+	while pool.size() << 1 <= _size:
 		pool.append_array(pool)
-	if pool.size() < size:
-		pool.append_array(pool.subarray(0,size-pool.size()-1))
+	if pool.size() < _size:
+		pool.append_array(pool.subarray(0,_size-pool.size()-1))
 	return pool
 
 func init_renderer(container):
-	print ('init renderer with size ', size)
+	print ('init renderer with size/format ', [size, format])
 	var img = Image.new()
-	img.create_from_data(size.x, size.y, false, Image.FORMAT_L8, pa)
+	img.create_from_data(size.x, size.y, false, format, pa)
 	var tex = ImageTexture.new()
 	tex.create_from_image(img, 0)
 
 	renderer = Renderer.new(size)
 	renderer.set_image(img, tex)
-	container.add_child(renderer)
+	container.call_deferred("add_child", renderer)
 
 func teardown_renderer(container):
-	container.remove_child(renderer)
-	renderer.queue_free()
-	renderer = null
+	container.call_deferred("remove_child", renderer)
+#	renderer.queue_free()
+#	renderer = null

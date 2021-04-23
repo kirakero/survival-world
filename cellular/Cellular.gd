@@ -11,17 +11,17 @@ var rng: RandomNumberGenerator
 var size: int
 var growth_ease: float = 1.0
 var simplex_scale: float = 1.0
-var subdivisions: int = 1.0
+#var subdivisions: int = 1.0
 var busy = false
 signal generate_done(newimg)
 
-func _init(rng: RandomNumberGenerator, size: int, world_pos: Vector2):
+func _init(_rng: RandomNumberGenerator, _size: int, _world_pos: Vector2):
 	map = PoolArrayGrid.new(size, size)
 	assert(map != null)
-	self.numberOfSteps = int(size / 10) + 3
-	self.rng = rng
-	self.world_pos = world_pos
-	self.size = size
+	numberOfSteps = int(_size / 10.0) + 3
+	rng = _rng
+	world_pos = _world_pos
+	size = _size
 
 func generate_new():
 	if busy:
@@ -29,51 +29,53 @@ func generate_new():
 	busy = true
 	init_map()
 	add_child(map)
-	map.queue(preload("res://shader/brush/cellular.shader"), {
-		'u_birth': birthLimit,
-		'u_death': deathLimit,
-		'u_scale': simplex_scale,
-		'u_offset': world_pos
-	}, numberOfSteps)
-	map.queue_command(preload("res://shader/command/FloodFillPBA.gd"), {
-		"origin": map.size * 0.5, 
-		"value": 255,
-		"low":   127,
-		"high":  127,
-	}, 1)
-	map.queue(preload("res://shader/brush/regrade.shader"), {
-		'u_delta': -0.5,
-	}, 1)
-	map.queue(preload("res://shader/brush/regrade.shader"), {
-		'u_delta': 0.5,
-		'u_low': 0.25,
-		'post_2x': 1, # upsample the image after this shader is processed
-	}, 1)
-	map.queue(preload("res://shader/brush/upscale.shader"), {
-		'post_2x': 1, # upsample the image after this shader is processed
-	}, 1)
-	map.queue(preload("res://shader/brush/upscale.shader"), {
-		'post_2x': 1, # upsample the image after this shader is processed
-	}, 1)
-	map.queue(preload("res://shader/brush/upscale.shader"), {
-	}, 1)
-	# roughness pass
-	map.queue(preload("res://shader/brush/cellular.shader"), {
-		'u_birth': 3,
-		'u_death': 3,
-		'u_scale': 20,
-		'u_offset': world_pos
-	}, 6)
-	map.queue(preload("res://shader/brush/cellular.shader"), {
-		'u_birth': 1,
-		'u_death': 2,
-		'u_scale': 20,
-		'u_offset': world_pos
-	}, 2)
+#	map.queue(preload("res://shader/brush/upscale.shader"), {
+#	}, 1)
+#	map.queue(preload("res://gen/shader/Cellular.shader"), {
+#		'u_birth': birthLimit,
+#		'u_death': deathLimit,
+#		'u_scale': simplex_scale,
+#		'u_offset': world_pos
+#	}, numberOfSteps)
+#	map.queue_command(preload("res://shader/command/FloodFillPBA.gd"), {
+#		"origin": map.size * 0.5, 
+#		"value": 255,
+#		"low":   127,
+#		"high":  127,
+#	}, 1)
+#	map.queue(preload("res://shader/brush/regrade.shader"), {
+#		'u_delta': -0.5,
+#	}, 1)
+#	map.queue(preload("res://shader/brush/regrade.shader"), {
+#		'u_delta': 0.5,
+#		'u_low': 0.25,
+#		'post_2x': 1, # upsample the image after this shader is processed
+#	}, 1)
+#	map.queue(preload("res://shader/brush/upscale.shader"), {
+#		'post_2x': 1, # upsample the image after this shader is processed
+#	}, 1)
+#	map.queue(preload("res://shader/brush/upscale.shader"), {
+#		'post_2x': 1, # upsample the image after this shader is processed
+#	}, 1)
+#	map.queue(preload("res://shader/brush/upscale.shader"), {
+#	}, 1)
+#	# roughness pass
+#	map.queue(preload("res://shader/brush/cellular.shader"), {
+#		'u_birth': 3,
+#		'u_death': 3,
+#		'u_scale': 20,
+#		'u_offset': world_pos
+#	}, 6)
+#	map.queue(preload("res://shader/brush/cellular.shader"), {
+#		'u_birth': 1,
+#		'u_death': 2,
+#		'u_scale': 20,
+#		'u_offset': world_pos
+#	}, 2)
 
-	map.render(true)
-	yield(map, "render_done")
-	emit_signal("generate_done", map)
+#	map.render(true)
+#	yield(map, "render_done")
+#	emit_signal("generate_done", map)
 	busy = false
 
 func generate():
@@ -104,16 +106,16 @@ func generate():
 	
 
 # removes all islands not part of the main island
-func denoise():
-	# change grade
-	map.regrade(-127, 0, 127)
-	# set the center island to be 2
-	map.flood_fill(map.size * 0.5, 255, 127, 127)
-	# set all values that are not 2 to 0
-	map.regrade(-127, 0, 127)
-
-	map.flood_fill(map.size * 0.5, 255, 127, 127)
-	pass
+#func denoise():
+#	# change grade
+#	map.regrade(-127, 0, 127)
+#	# set the center island to be 2
+#	map.flood_fill(map.size * 0.5, 255, 127, 127)
+#	# set all values that are not 2 to 0
+#	map.regrade(-127, 0, 127)
+#
+#	map.flood_fill(map.size * 0.5, 255, 127, 127)
+#	pass
 
 func init_map():
 	map = PoolArrayGrid.new(size, size)
@@ -125,8 +127,8 @@ func init_map():
 			var centerness = ease(1.0 - p_dist / max_dist, growth_ease)
 
 			if (rng.randf() < chanceToStartAlive * centerness):
-				map.write(x, y, 1)
-	map.writev(center, 1)
+				map.write(x, y, 255)
+	map.writev(center, 255)
    
 
 func iter_map():

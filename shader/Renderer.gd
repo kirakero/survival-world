@@ -10,7 +10,7 @@ var _texture : ImageTexture
 var _modified_shader_params := {}
 const BRUSH_TEXTURE_SHADER_PARAM = "u_brush_texture"
 var _will_draw = false
-var _is_looping = false
+#var _is_looping = false
 var _job = 0
 signal texture_region_changed(newimg)
 signal loop_done(newimg)
@@ -27,9 +27,9 @@ func _init(dimensions: Vector2):
 	_viewport_sprite = Sprite.new()
 	_viewport_sprite.centered = false
 	_viewport_sprite.material = _brush_material
-	_viewport.add_child(_viewport_sprite)
+	_viewport.call_deferred("add_child", _viewport_sprite)
 	
-	add_child(_viewport)
+	call_deferred("add_child", _viewport)
 	
 func set_image(image: Image, texture: ImageTexture):
 	assert(image != null and texture != null)
@@ -62,19 +62,18 @@ func iterate():
 		return
 	_will_draw = true
 	
-func _process(delta):
+func _process(_delta):
 	if not _will_draw:
 		return
 	print('process render step')
 	_will_draw = false
 	_viewport.render_target_update_mode = Viewport.UPDATE_ONCE
 	yield(VisualServer, "frame_post_draw")
-	var data := _viewport.get_texture().get_data()
-	_viewport_sprite.texture
-	var tex = ImageTexture.new()
-	tex.create_from_image(data, 0)
-	_viewport_sprite.set_texture(tex)
-	emit_signal("texture_region_changed", data)
+#	var data := _viewport.get_texture().get_data()
+#	var tex = ImageTexture.new()
+#	tex.create_from_image(data, 0)
+	_viewport_sprite.set_texture(_viewport.get_texture())
+	emit_signal("texture_region_changed", _viewport.get_texture().get_data())
 	
 
 func loop(steps, job = null, last = null):
