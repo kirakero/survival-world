@@ -6,13 +6,15 @@ class_name Pipeline
 var args: Dictionary = {}
 var thread: Thread
 var coordinator: Coordinator
+var callback
 
 signal done
 
-func _init(_args: Dictionary, parent: Node):
+func _init(_args: Dictionary, parent: Node, _callback = null):
 	# the args should contain size at a minimum
 	args = _args
 	parent.call_deferred("add_child", self)
+	callback = _callback
 
 func run(_coordinator: Coordinator):
 	# handles execution of this object
@@ -24,7 +26,8 @@ func run(_coordinator: Coordinator):
 	coordinator.process(self)
 	
 func _exec(_thread: Thread):
-	print('exec _exec', args)
+#	print('exec _exec', args.keys())
+	print('exec _exec')
 	# coordinator will call this when its time to actually process stuff via
 	# thread.start(pipeline, "_exec", thread)
 	var result = null
@@ -35,20 +38,34 @@ func _exec(_thread: Thread):
 	if args.has('queue'):
 		if args['queue'].size() > 0:
 			var job = args['queue'].pop_front()
-			print('pull job form queue', job)
-			# job['pipeline'] contains the Pipeline we need to run
-			# job['params'] contains the arguments
-			# job['pass'] contains the arguments we pass from the parent
 			var _args = job['args']
 			for k in job['pass']:
 				_args[k] = args[k]
-			var pipeline: Pipeline = job['pipeline'].pipeline(_args, self)
+			if job.has('pass-as'):
+				for k in job['pass-as'].keys():
+					_args[job['pass-as'][k]] = args[k]
+			if job.has('batch'):
+				var batch = BatchPipeline.new(self, job, _args)
+				batch.run(coordinator)
+				result = yield(batch, "done")
+				batch.queue_free()
+				
+			else:
+				# job['pipeline'] contains the Pipeline we need to run
+				# job['params'] contains the arguments
+				# job['pass'] contains the arguments we pass from the parent
+
+				var pipeline: Pipeline = job['pipeline'].pipeline(_args, self)
+				
+				print('send args', _args.keys(), ' to ', pipeline)
+				pipeline.run(coordinator)
+				complete = false
+				result = yield(pipeline, "done")
+				pipeline.queue_free()
 			
-			print('send args', _args, ' to ', pipeline)
-			pipeline.run(coordinator)
-			complete = false
-			result = yield(pipeline, "done")
-			pipeline.queue_free()
+			if job.has('merge'):
+				for k in job['merge']:
+					args[k] = result[k]
 			
 	# if TYPE_SHADER, use the renderer in the args or spawn a new renderer
 	# and compute the result
@@ -81,9 +98,15 @@ func _exec(_thread: Thread):
 	# are written
 	
 	if args.has('command'):
-		print ('cmd start')
-		args = args['command'].run(args, result, coordinator)
-	print ('cmd done')
+		var _args = args
+		# overwrite args if needed
+#		if args['cmd-args']:
+#			for k in args['cmd-args'].keys():
+#				_args[k] = args['cmd-args'][k]
+#		print ('cmd start', _args.keys())
+		args = args['command'].run(_args, result, coordinator)
+		print('cmd complete ', args.keys())
+	
 	if not complete:
 		return _exec(thread)
 		
@@ -96,5 +119,7 @@ func _end(result):
 	if coordinator != null and not thread.is_active():
 		coordinator.release(thread)
 	# return the result
+	print('pipeline is ending with result ', result.keys())
 	emit_signal("done", result)
-
+	if callback != null:
+		callback.call_deferred('_done', self, args, result)
