@@ -8,7 +8,7 @@ func _init(_format: int = -1):
 # take the result, which is type Dictionary, extract the Image from data,
 # and store it in args['data'], which is type ImageData
 func run(args: Dictionary, result, _coordinator) -> Dictionary:		
-	
+	print('IslandRender: start with args ', args.keys())
 	var points: Array = args['points']
 	var extents: Rect2 = args['extents']
 	
@@ -58,7 +58,7 @@ func run(args: Dictionary, result, _coordinator) -> Dictionary:
 				var p = x + y * extents.size.x
 				mask[p] = 255
 
-	return {"mask": mask}
+	return {"mask": mask, "_key": args['_key']}
 
 func vector2key(key_vector: Vector2):
 	return str(int(key_vector.x),',',int(key_vector.y))

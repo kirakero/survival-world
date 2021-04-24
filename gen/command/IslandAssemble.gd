@@ -57,7 +57,7 @@ func run(args: Dictionary, result, _coordinator) -> Dictionary:
 
 		islands.append({
 			'points': points_index,
-			'extends': extent,
+			'extents': extent,
 		})
 
 	return {

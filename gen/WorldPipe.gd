@@ -131,15 +131,22 @@ static func pipeline(args: Dictionary, parent: Node):
 		# outputs
 		'merge': ['islands'],
 	})
+	
+	args['queue'].append({
+		# Use a generic pipeline
+		'pipeline': preload("res://gen/Pipe.gd"),
+		# batch process using islands
+		'batch': 'islands',
+		# inputs
+		'args': {
+			# Assign the Spawn command
+			'command': preload("res://gen/command/IslandRender.gd").new(),
+		},
+		'pass': ['seed'],
+		# outputs
+		'results-as': 'islands/rendered',
+	})
 
-#	args['queue'].append({
-#		# Use a generic pipeline
-#		'pipeline': preload("res://gen/Pipe.gd"),
-#		# inputs
-#		'pass': ['poisson/size_v2', 'poisson/basic_size_v2', 'indexed'],
-#		'args': {},
-#		# outputs
-#		'merge': ['islands'],
-#	})
+
 
 	return Pipeline.new(args, parent)

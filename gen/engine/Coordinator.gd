@@ -18,13 +18,13 @@ func _process(pipeline):
 	mutex.lock()
 	var thread: Thread = sleeping.pop_back()
 	if thread == null or thread.is_active():
-		print('coordinator queue')
+		print('coordinator queue ', queue.size())
 		queue.append(pipeline)
-		if thread.is_active():
-			sleeping.append(thread)
+#		if thread != null && not thread.is_active():
+#			sleeping.append(thread)
 		mutex.unlock()
 	else:
-		print('coordinator process')
+		print('coordinator process ', queue.size())
 		var _status = thread.start(pipeline, "_exec", thread)
 		print('thread started with ', _status)
 
@@ -35,12 +35,13 @@ func _release(thread: Thread):
 	mutex.lock()
 	var pipeline = queue.pop_back()
 	if pipeline != null:
+		print('attempt with ', pipeline)
 		var _status = thread.start(pipeline, "_exec", thread)
 		print('thread started with ', _status)
 	else:
 		sleeping.append(thread)
 	mutex.unlock()
-	print('coordinator release')
+	print('coordinator release ', queue.size())
 
 func terminate():
 	for thread in sleeping:

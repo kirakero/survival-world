@@ -38,23 +38,39 @@ func _exec(_thread: Thread):
 	if args.has('queue'):
 		if args['queue'].size() > 0:
 			var job = args['queue'].pop_front()
-			var _args = job['args']
-			for k in job['pass']:
-				_args[k] = args[k]
-			if job.has('pass-as'):
-				for k in job['pass-as'].keys():
-					_args[job['pass-as'][k]] = args[k]
+			
+			
 			if job.has('batch'):
-				var batch = BatchPipeline.new(self, job, _args)
+				var _args_all = []
+				for _args in args[job['batch']]:
+					for k in job['args'].keys():
+						_args[k] = job['args'][k]
+					for k in job['pass']:
+						_args[k] = args[k]
+					if job.has('pass-as'):
+						for k in job['pass-as'].keys():
+							_args[job['pass-as'][k]] = args[k]
+					_args_all.append(_args)
+				var batch = BatchPipeline.new(self, job, _args_all)
 				batch.run(coordinator)
-				result = yield(batch, "done")
+				var _result = yield(batch, "done")
+				result = []
+				result.resize(_result.size())
+				for i in range(_result.size()):
+					result[_result[i]['_key']] = _result[i]
+				print('batch done')
 				batch.queue_free()
 				
 			else:
 				# job['pipeline'] contains the Pipeline we need to run
 				# job['params'] contains the arguments
 				# job['pass'] contains the arguments we pass from the parent
-
+				var _args = job['args']
+				for k in job['pass']:
+					_args[k] = args[k]
+				if job.has('pass-as'):
+					for k in job['pass-as'].keys():
+						_args[job['pass-as'][k]] = args[k]
 				var pipeline: Pipeline = job['pipeline'].pipeline(_args, self)
 				
 				print('send args', _args.keys(), ' to ', pipeline)
@@ -66,6 +82,8 @@ func _exec(_thread: Thread):
 			if job.has('merge'):
 				for k in job['merge']:
 					args[k] = result[k]
+			if job.has('results-as'):
+					args[job['results-as']] = result
 			
 	# if TYPE_SHADER, use the renderer in the args or spawn a new renderer
 	# and compute the result

@@ -3,7 +3,7 @@ class_name BatchPipeline
 
 var pipeline
 var job: Dictionary
-var args: Dictionary
+var args: Array
 var coordinator: Coordinator
 var results: Array
 var mutex: Mutex
@@ -19,11 +19,13 @@ func _init(_pipeline, _job, _args):
 func run(_coordinator: Coordinator):
 	# handles execution of this object
 	# if everything checks out, queue this task for processing
-	if self.coordinator != null:
+	if coordinator != null:
 		print('already running')
 		return
 	coordinator = _coordinator
-	for item in args:
+	for i in args.size():
+		var item = args[i]
+		item['_key'] = i
 		call_deferred('_start_pipeline', item)
 
 func _start_pipeline(_args):
@@ -31,10 +33,7 @@ func _start_pipeline(_args):
 
 func _done(_pipeline, _args, _result):
 	mutex.lock()
-	results.append({
-		'args': _args,
-		'result': _result
-	})
+	results.append( _result )
 	mutex.unlock()
 	_pipeline.queue_free()
 	if results.size() == args.size():
