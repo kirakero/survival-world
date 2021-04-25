@@ -7,6 +7,7 @@ var args: Dictionary = {}
 var thread: Thread
 var coordinator: Coordinator
 var callback
+var _silence = 	true
 
 signal done
 
@@ -26,15 +27,25 @@ func run(_coordinator: Coordinator):
 	coordinator.process(self)
 	
 func _exec(_thread: Thread):
-#	print('exec _exec', args.keys())
-	print('exec _exec')
+	if not _silence:	
+		print('exec _exec', args.keys())
+#	print('exec _exec')
 	# coordinator will call this when its time to actually process stuff via
 	# thread.start(pipeline, "_exec", thread)
 	var result = null
 	var complete = true
 	thread = _thread
 	# work here
+	
+	if args.has('pre-command'):
+		var _args = args
+		args = args['pre-command'].run(_args, result, coordinator)
+		if not _silence:	
+			print('pre-cmd complete ', args.keys())
+		args.erase('pre-command')
+			
 	# if QUEUE, for each job we need to execute the sub-pipeline
+	
 	if args.has('queue'):
 		if args['queue'].size() > 0:
 			var job = args['queue'].pop_front()
@@ -45,8 +56,12 @@ func _exec(_thread: Thread):
 				for _args in args[job['batch']]:
 					for k in job['args'].keys():
 						_args[k] = job['args'][k]
-					for k in job['pass']:
-						_args[k] = args[k]
+					if job.has('args-as'):
+						for k in job['args-as'].keys():
+							_args[job['args-as'][k]] = _args[k]
+					if job.has('pass'):
+						for k in job['pass']:
+							_args[k] = args[k]
 					if job.has('pass-as'):
 						for k in job['pass-as'].keys():
 							_args[job['pass-as'][k]] = args[k]
@@ -58,7 +73,8 @@ func _exec(_thread: Thread):
 				result.resize(_result.size())
 				for i in range(_result.size()):
 					result[_result[i]['_key']] = _result[i]
-				print('batch done')
+				if not _silence:
+					print('batch done')
 				batch.queue_free()
 				
 			else:
@@ -66,46 +82,57 @@ func _exec(_thread: Thread):
 				# job['params'] contains the arguments
 				# job['pass'] contains the arguments we pass from the parent
 				var _args = job['args']
-				for k in job['pass']:
-					_args[k] = args[k]
+				if job.has('pass'):
+					for k in job['pass']:
+						_args[k] = args[k]
 				if job.has('pass-as'):
 					for k in job['pass-as'].keys():
 						_args[job['pass-as'][k]] = args[k]
 				var pipeline: Pipeline = job['pipeline'].pipeline(_args, self)
-				
-				print('send args', _args.keys(), ' to ', pipeline)
+				if not _silence:
+					print('send args', _args.keys(), ' to ', pipeline)
 				pipeline.run(coordinator)
-				complete = false
+				
 				result = yield(pipeline, "done")
 				pipeline.queue_free()
 			
+			complete = false
 			if job.has('merge'):
 				for k in job['merge']:
 					args[k] = result[k]
 			if job.has('results-as'):
 					args[job['results-as']] = result
+			if job.has('unset'):
+				for k in job['unset']:
+					args.erase(k)
 			
 	# if TYPE_SHADER, use the renderer in the args or spawn a new renderer
 	# and compute the result
 	elif args.has('shader'):
-		print('exec shader')
-		args['data'].init_renderer(self)
-		args['data'].renderer.set_brush_shader( args['shader'] )
+		var src_data = 'data'
+		if args['shader/data']:
+			src_data = args['shader/data']
+		if not _silence:
+			print('exec shader')
+		args[src_data].init_renderer(self)
+		args[src_data].renderer.set_brush_shader( args['shader'] )
 		for param in args.keys():
 			if param.substr(0,2) == 'u_':
-				args['data'].renderer.set_brush_shader_param(param, args[param])
+				args[src_data].renderer.set_brush_shader_param(param, args[param])
 		if (args.has('iterations')):
 			if args['iterations'] > 0:
-				args['data'].renderer.loop( args['iterations'] )
-				result = yield(args['data'].renderer, "loop_done") 
-				print('shader yield')
-			else:
+				args[src_data].renderer.loop( args['iterations'] )
+				result = yield(args[src_data].renderer, "loop_done") 
+				if not _silence:
+					print('shader yield')
+			elif not _silence:
 				print('shader yield skip')
 		else:
-			args['data'].renderer.loop( 1 )
-			result = yield(args['data'].renderer, "loop_done") 
-			print('shader yield def')
-		args['data'].teardown_renderer(self)
+			args[src_data].renderer.loop( 1 )
+			result = yield(args[src_data].renderer, "loop_done") 
+			if not _silence:
+				print('shader yield def')
+		args[src_data].teardown_renderer(self)
 	# if TYPE_CMD, just execute this code
 	# commands are special in that they post process the results of both the
 	# queue or shader
@@ -117,13 +144,9 @@ func _exec(_thread: Thread):
 	
 	if args.has('command'):
 		var _args = args
-		# overwrite args if needed
-#		if args['cmd-args']:
-#			for k in args['cmd-args'].keys():
-#				_args[k] = args['cmd-args'][k]
-#		print ('cmd start', _args.keys())
 		args = args['command'].run(_args, result, coordinator)
-		print('cmd complete ', args.keys())
+		if not _silence:
+			print('cmd complete ', args.keys())
 	
 	if not complete:
 		return _exec(thread)
@@ -137,7 +160,8 @@ func _end(result):
 	if coordinator != null and not thread.is_active():
 		coordinator.release(thread)
 	# return the result
-	print('pipeline is ending with result ', result.keys())
+	if not _silence:	
+		print('pipeline is ending with result ', result.keys())
 	emit_signal("done", result)
 	if callback != null:
 		callback.call_deferred('_done', self, args, result)

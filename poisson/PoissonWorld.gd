@@ -110,7 +110,7 @@ func genWorld():
 		return false
 	busy = true
 	print('gen')
-	coordinator = Coordinator.new(4)
+	coordinator = Coordinator.new(6)
 	var pipe = preload("res://gen/WorldPipe.gd").pipeline({}, self)
 	assert(pipe.args != null)
 
@@ -123,47 +123,58 @@ func genWorld():
 	#####
 	
 	var data = PoolByteArray()
-	var world_dim = res['poisson/size_v2']
+	var world_dim = res['basemap/current_size']
+	print (world_dim)
 	data = resize_and_fill(data, world_dim.x * world_dim.y * 4, 35)
-
-	var _colors = [Color.orange, Color.red, Color.green, Color.yellow, Color.silver, Color.pink, Color.white, Color.purple, Color.teal, Color.lavender]
-	var colors = []
-	for col in _colors:
-		colors.append(col)
-		colors.append(col * 0.5)
-
-	for k in res['islands'].size():
-		var bytes = res['islands/rendered'][k]['mask']
-		var island_extents = res['islands'][k]['extents']
-		print (['island ', k, bytes.size(), island_extents.size.x * island_extents.size.y])
-
-	for k in res['islands'].size():
-		var bytes = res['islands/rendered'][k]['mask']
-		var island_extents = res['islands'][k]['extents']
-		print (['island ', k, bytes.size(), island_extents.size.x * island_extents.size.y])
-		assert(bytes.size() == island_extents.size.x * island_extents.size.y)
-		for x in range(0, island_extents.size.x):
-			for y in range(0, island_extents.size.y):
-
-				if x + island_extents.position.x > world_dim.x or x + island_extents.position.x < 0:
-					continue
-				if y + island_extents.position.y > world_dim.y or y + island_extents.position.y < 0:
-					continue	
-				if bytes[x + y * island_extents.size.x] < 200:
-					continue
-				# translate the extents into world coords for the output byte array
-				var p = (x + island_extents.position.x) * 4 + (y + island_extents.position.y) * 4 * world_dim.x
-
-				data[p] = colors[k % colors.size()].r * bytes[x + y * island_extents.size.x]
-				data[p+1] = colors[k % colors.size()].g * bytes[x + y * island_extents.size.x]
-				data[p+2] = colors[k % colors.size()].b * bytes[x + y * island_extents.size.x]
-				data[p+3] = 255
-
 	var img = Image.new()
 	img.create_from_data(world_dim.x, world_dim.y, false, Image.FORMAT_RGBA8, data)
+	for k in res['islands'].size():
+		var bytes = res['islands'][k]['image'].pa
+		var island_extents = res['islands'][k]['extents']
+		print (['island ', k, island_extents.size.x , island_extents.size.y, bytes[0], bytes[1], bytes[2], bytes[3]])
+	for k in res['islands'].size():
+		var image = res['islands'][k]['image']
+		var island_extents = res['islands'][k]['extents']
+		img.blend_rect_mask(image.get_image(), image.get_image(), Rect2(0, 0, island_extents.size.x, island_extents.size.y), res['islands'][k]['extents'].position + world_dim * 0.5)
+#	var _colors = [Color.orange, Color.red, Color.green, Color.yellow, Color.silver, Color.pink, Color.white, Color.purple, Color.teal, Color.lavender]
+#	var colors = []
+#	for col in _colors:
+#		colors.append(col)
+#		colors.append(col * 0.5)
+
+#	for k in res['islands'].size():
+#		var bytes = res['islands'][k]['image'].pa
+#		var island_extents = res['islands'][k]['extents']
+#		print (['island ', k, bytes.size(), island_extents.size.x * island_extents.size.y])
+		
+#	for k in res['islands'].size():
+#		var bytes = res['islands'][k]['image'].pa
+#
+#		var island_extents = res['islands'][k]['extents']
+#		island_extents.position = island_extents.position + world_dim * 0.5
+#		print (['island ', k, bytes.size(), island_extents.size.x * island_extents.size.y])
+#		assert(bytes.size() == island_extents.size.x * island_extents.size.y)
+#		for x in range(0, island_extents.size.x):
+#			for y in range(0, island_extents.size.y):
+#
+#				if x + island_extents.position.x > world_dim.x or x + island_extents.position.x < 0:
+#					continue
+#				if y + island_extents.position.y > world_dim.y or y + island_extents.position.y < 0:
+#					continue	
+#				if bytes[x + y * island_extents.size.x] < 200:
+#					continue
+#				# translate the extents into world coords for the output byte array
+#				var p = (x + island_extents.position.x) * 4 + (y + island_extents.position.y) * 4 * world_dim.x
+#
+#				data[p] = colors[k % colors.size()].r * bytes[x + y * island_extents.size.x]
+#				data[p+1] = colors[k % colors.size()].g * bytes[x + y * island_extents.size.x]
+#				data[p+2] = colors[k % colors.size()].b * bytes[x + y * island_extents.size.x]
+#				data[p+3] = 255
+#
+#	var img = Image.new()
+#	img.create_from_data(world_dim.x, world_dim.y, false, Image.FORMAT_RGBA8, data)
 	var tex = ImageTexture.new()
 	tex.create_from_image(img, 0)
-
 	var sprite: Sprite = $Sprite
 	sprite.set_texture(tex)
 	

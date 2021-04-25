@@ -1,6 +1,7 @@
-[gd_scene load_steps=2 format=2]
+[gd_scene load_steps=3 format=2]
 
 [ext_resource path="res://poisson/PoissonWorld.gd" type="Script" id=1]
+[ext_resource path="res://poisson/Camera2D.gd" type="Script" id=2]
 
 [node name="Node2D" type="Node2D"]
 script = ExtResource( 1 )
@@ -14,5 +15,9 @@ gease = -3.198
 
 [node name="Sprite" type="Sprite" parent="."]
 position = Vector2( 46.8355, 19.9237 )
-scale = Vector2( 3, 3 )
 centered = false
+
+[node name="Camera2D" type="Camera2D" parent="."]
+position = Vector2( 515.418, 301.16 )
+current = true
+script = ExtResource( 2 )

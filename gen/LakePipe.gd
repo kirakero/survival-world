@@ -23,7 +23,7 @@ static func pipeline(args: Dictionary, parent: Node):
 		passA_iterations = args['passA_iterations']
 		
 	var imgtodata = preload("res://gen/command/ImageToData.gd").new(Image.FORMAT_RGBA8)	
-	args['data'] = ImageData.new(size)
+	args['data'] = ImageData.new(size, Image.FORMAT_RGBA8)
 	
 	# Create the noise
 	args['queue'].append({

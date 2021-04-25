@@ -12,6 +12,8 @@ const BRUSH_TEXTURE_SHADER_PARAM = "u_brush_texture"
 var _will_draw = false
 #var _is_looping = false
 var _job = 0
+var _silence = true
+
 signal texture_region_changed(newimg)
 signal loop_done(newimg)
 
@@ -65,7 +67,8 @@ func iterate():
 func _process(_delta):
 	if not _will_draw:
 		return
-	print('process render step')
+	if not _silence:
+		print('process render step')
 	_will_draw = false
 	_viewport.render_target_update_mode = Viewport.UPDATE_ONCE
 	yield(VisualServer, "frame_post_draw")
@@ -77,17 +80,17 @@ func _process(_delta):
 	
 
 func loop(steps, job = null, last = null):
-	print('loop')
+	if not _silence:
+		print('loop')
 	if not job:
 		_job = _job + 1
 		job = _job
 	if job != _job:
-		print ('no')
 		return
-	print ([steps, job, last])
+	if not _silence:
+		print ([steps, job, last])
 	if steps > 0:
 		iterate()
-		print ([_will_draw])
 		last = yield(self, "texture_region_changed")
 		steps = steps - 1
 		loop(steps, job, last)

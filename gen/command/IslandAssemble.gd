@@ -30,7 +30,9 @@ func run(args: Dictionary, result, _coordinator) -> Dictionary:
 		var extent_high = Vector2.ZERO
 		for point in matched[group]:
 			var r = rng.randf_range(1.0, 3.5)
-			point[0] = point[0].move_toward(all_points, r * 2.5)
+			point[0] = point[0].move_toward(all_points,  point[0].distance_to(all_points) * 0.35)
+			point[0].x = int(point[0].x)
+			point[0].y = int(point[0].y)
 #			point[1] = 6 - r #todo change me
 			points_index.append(point)
 			if point[0].x < extent_low.x:

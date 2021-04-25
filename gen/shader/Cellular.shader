@@ -6,9 +6,12 @@ uniform vec4 u_color = vec4(1.0);
 
 uniform int u_death = 3;
 uniform float u_birth = 1.5;
-
+uniform float u_luminance = 0.5;
+uniform float u_min = 0.5;
+uniform bool u_deathnoise = false;
 
 uniform vec2 u_offset;
+uniform vec2 u_size;
 uniform float u_scale:hint_range(0.0001, 1000.0);
 
 
@@ -92,7 +95,7 @@ float cell(sampler2D heightmap, vec2 uv, vec2 pixel_size, float weight) {
 	
 	// make sure the center is always present
 	if (uv.x > 0.48 && uv.x < 0.52 && uv.y > 0.48 && uv.y < 0.52) {
-		return 0.5;
+		return u_luminance;
 	}
 	
 	vec2 _uv = uv / eps;
@@ -109,7 +112,7 @@ float cell(sampler2D heightmap, vec2 uv, vec2 pixel_size, float weight) {
 			}
 			vec2 p = vec2(x, y);
 			float nh = texture(heightmap, uv + p * eps).r;
-			if (nh > 0.0) {
+			if (nh >= u_min) {
 				count++;
 			}
 		}
@@ -118,10 +121,15 @@ float cell(sampler2D heightmap, vec2 uv, vec2 pixel_size, float weight) {
 	uv.x = float(int(uv.x));
 	uv.y = float(int(uv.y));
 	uv *= eps;
-	if ( h > 0.0 && count < float(u_death) ) {
+	float noise = snoise((uv * u_size + u_offset) * u_scale);
+	float deathnoise = 0.0;
+	if (u_deathnoise == true) {
+		deathnoise = noise;
+	}
+	if ( h > 0.0 && count - deathnoise < float(u_death) ) {
 		return 0.0;
-	} else if (count > u_birth - snoise((uv + u_offset) * u_scale)) {
-		return 0.5;
+	} else if (count > u_birth - noise) {
+		return u_luminance;
 	}
 	
 	return h;
