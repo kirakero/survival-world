@@ -81,9 +81,9 @@ static func pipeline(args: Dictionary, parent: Node):
 		'radius':	args['poisson/size_v2'].x * 0.0035	,# radius
 		'pradius':	args['poisson/size_v2'].x * 0.020 	,# poissonradius
 		'range':	args['poisson/size_v2'].x * 0.022 	,# range
-		'variance':	0.4 								,# variance
-		'curve':	-0.2								,# noisecurve
-		'attempts':	3									,# attempts
+		'variance':	1.2 								,# variance
+		'curve':	-0.4								,# noisecurve
+		'attempts':	2									,# attempts
 	})
 
 #	args['poisson/growth'].append({
@@ -171,7 +171,7 @@ static func pipeline(args: Dictionary, parent: Node):
 		'merge': ['islands'],
 		'unset': ['matched', 'parents', 'indexed', 'islands/rendered']
 	})
-
+	
 	args['queue'].append({
 		'pipeline': preload("res://gen/Pipe.gd"),
 		'batch': 'islands',
@@ -267,7 +267,7 @@ static func pipeline(args: Dictionary, parent: Node):
 			# outputs
 			'merge': ['islands', 'basemap/current_size'],
 		})
-		
+
 	#	# 2k
 		args['queue'].append({
 			'pipeline': preload("res://gen/UpsamplePipe.gd"),
@@ -286,6 +286,26 @@ static func pipeline(args: Dictionary, parent: Node):
 			'pass': ['islands', 'basemap/current_size'],
 			# outputs
 			'merge': ['islands', 'basemap/current_size'],
+		})
+		
+		args['queue'].append({
+			'pipeline': preload("res://gen/Pipe.gd"),
+			'batch': 'islands',
+			'args': {
+				# shader step
+				'shader': preload("res://gen/shader/Cellular.shader"),
+				'shader/data': 'image',
+				'u_luminance': 1.0,
+				'u_min': 1.0,
+				'u_birth': 4,
+				'u_death': 3,
+				'u_scale': 0,
+				'iterations': 4,
+				# integrate results back to shader/data ie 'image'
+				'command': preload("res://gen/command/ImageToData.gd").new(Image.FORMAT_L8),
+			},
+			# outputs
+			'results-as': 'islands',
 		})
 	#
 		# 8k

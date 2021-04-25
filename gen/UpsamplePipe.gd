@@ -51,26 +51,6 @@ static func pipeline(args: Dictionary, parent: Node, _callback = null):
 #	args['queue'].append({
 #		'pipeline': preload("res://gen/Pipe.gd"),
 #		'batch': 'islands',
-#		'args': {
-#			# shader step
-#			'shader': preload("res://gen/shader/Cellular.shader"),
-#			'shader/data': 'image',
-#			'u_luminance': 1.0,
-#			'u_min': 1.0,
-#			'u_birth': 3.5,
-#			'u_death': 0,
-#			'u_scale': 10,
-#			'iterations': 1,
-#			# integrate results back to shader/data ie 'image'
-#			'command': preload("res://gen/command/ImageToData.gd").new(Image.FORMAT_L8),
-#		},
-#		# outputs
-#		'results-as': 'islands',
-#	})
-
-#	args['queue'].append({
-#		'pipeline': preload("res://gen/Pipe.gd"),
-#		'batch': 'islands',
 #		'args-as': {'position':'u_offset'},
 #		'args': {
 #			# shader step
