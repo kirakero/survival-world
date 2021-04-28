@@ -34,7 +34,11 @@ func async_world_post(_newgame, _seed, _world_size, _chunk_size):
 		'world_size': _world_size,
 		'chunk_size': _chunk_size,
 	})
-	
+
+# returns all settings for the world
+func async_world_get():
+	invoke('world_get', {})
+
 # write chunk
 func async_chunk_post(_position, _data):
 	invoke('chunk_post', {
@@ -42,13 +46,25 @@ func async_chunk_post(_position, _data):
 		'data': _data,
 	})
 
+# bulk write chunk
+func async_multichunk_post(_data: Array):
+	# use format for regular call, as array
+	invoke('multichunk_post', {
+		'data': _data,
+	})
+	
 # read chunk
 func async_chunk_get(_position):
 	invoke('chunk_get', {
 		'position': _position,
 	})
 
-
+# bulk read chunk
+func async_multichunk_get(_data: Array):
+	# use format for regular call, as array
+	invoke('multichunk_get', {
+		'data': _data,
+	})
 
 
 
