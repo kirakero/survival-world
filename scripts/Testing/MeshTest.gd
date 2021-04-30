@@ -31,7 +31,6 @@ func _ready():
 	var chunk = MeshChunk.new(null, data, 0, 0, testsize)
 	var ma = MeshInstance.new()
 	ma.mesh = chunk.generate_chunk()
-	ResourceSaver.save("res://test.tres", ma.mesh, 32)
 	add_child(ma)
 
 

@@ -46,12 +46,18 @@ func generate_chunk():
 	var index_index = 0
 	
 	var heights = []
+	var _ch_half = Vector3(chunk_size * 0.5, 0, chunk_size * 0.5)
 	for _z in range(0, chunk_size + 2):
 		for _x in range(0, chunk_size + 2):
 			var pixel = (_x * 4) + (_z * (chunk_size + 2) * 4)
-			var nh = bytes2height(data[pixel], data[pixel + 1])
-			assert(data[pixel] != 0)
-			heights.append(Vector3(x + _x - 1, nh, z + _z - 1))
+			var nh = -0.5
+			if pixel < data.size():
+				if data[pixel] == 255:
+					nh = 1
+#				nh = bytes2height(data[pixel], data[pixel + 1])
+#				assert(data[pixel] != 0)
+### removed -1 from being added to _x and _z
+			heights.append(Vector3(_x, nh,_z) - _ch_half)
 
 	
 	for _z in range(0, chunk_size + 1):
@@ -95,9 +101,10 @@ func generate_chunk():
 
 	# Create mesh surface from mesh array.
 	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arr)
-	
-	
-	return mesh
+	mesh_instance = MeshInstance.new()
+	mesh_instance.mesh = mesh
+	mesh_instance.create_trimesh_collision()
+	add_child(mesh_instance)
 	
 func generate_water():
 	var plane_mesh = PlaneMesh.new()

@@ -10,24 +10,26 @@ var provider: Reference
 
 const DB_DATA_DIR = 'user://savegame/'
 
+signal world_get_done(result)
 signal world_post_done(result)
 signal chunk_post_done(result)
 signal multichunk_post_done(result)
+signal multichunk_get_done(result)
 signal chunk_get_done(result)
 
 func _init(_provider):
 	provider = _provider
 
 func set_game(_game):
-	if game != null:
-		provider.conn_delete()
+	if game != null and provider != null:
+		provider.conn_delete({})
 	
 	game = _game
 	provider.conn_post({'game': _game})
 
 # standardize the request object
 func invoke(endpoint: String, data: Dictionary):
-	print ('invoke', endpoint)
+	print ('invoke ', endpoint)
 	data['game'] = game
 	data['_sender'] = self
 	data['_callback'] = str(endpoint, '_done')

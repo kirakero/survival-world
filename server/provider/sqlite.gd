@@ -130,7 +130,9 @@ func chunk_post(data: Dictionary):
 func multichunk_get(data: Dictionary):
 	if not _is_connected():
 		return _error(data, 'Not connected')
-	var res = Chunks.where(data['data'])
+	var res = {
+		'data': Chunks.where(data['data'])
+	}
 	return _okay(data, res)
 
 # update many chunks

@@ -1,10 +1,10 @@
 extends Node
 
-static func pipeline(args: Dictionary, parent: Node):
+static func pipeline(args: Dictionary, parent: Node = null):
 
 	args['u_offset'] = Vector2(500, 500)
 
-	args['seed'] = 12
+	
 	
 	args['rng'] = RandomNumberGenerator.new()
 	args['rng'].seed = args['seed']

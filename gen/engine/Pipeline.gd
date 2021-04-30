@@ -11,10 +11,11 @@ var _silence = 	true
 
 signal done
 
-func _init(_args: Dictionary, parent: Node, _callback = null):
+func _init(_args: Dictionary, parent: Node = null, _callback = null):
 	# the args should contain size at a minimum
 	args = _args
-	parent.call_deferred("add_child", self)
+	if parent != null:
+		parent.call_deferred("add_child", self)
 	callback = _callback
 
 func run(_coordinator: Coordinator):

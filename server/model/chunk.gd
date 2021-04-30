@@ -42,9 +42,9 @@ func first(position: Vector2) -> Dictionary:
 	var query = "pos_x = '%' and pos_y = '%'" % [position.x, position.y]
 	return db.select_rows(TABLE, query, ["*"])[0]
 
-func where(positions: Dictionary) -> Array:
+func where(positions: Array) -> Array:
 	var values = PoolStringArray()
 	for p in positions:
-		values = '%,%' % [int(p.x), int(p.y)]
-	return db.select_rows(TABLE, 'pos_x || "," || pos_y IN (%)' % values.join(','), ['*'])
+		values.append("'%s,%s'" % [int(p.x), int(p.y)])
+	return db.select_rows(TABLE, 'pos_x || "," || pos_y IN (%s)' % values.join(','), ['*'])
 	
