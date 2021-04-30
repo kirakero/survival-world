@@ -1,7 +1,7 @@
 [gd_scene load_steps=4 format=2]
 
-[ext_resource path="res://World.gd" type="Script" id=1]
-[ext_resource path="res://Player.tscn" type="PackedScene" id=2]
+[ext_resource path="res://zOld/World.gd" type="Script" id=1]
+[ext_resource path="res://zOld/Player.tscn" type="PackedScene" id=2]
 
 [sub_resource type="Environment" id=1]
 ambient_light_color = Color( 1, 1, 1, 1 )
@@ -20,4 +20,5 @@ environment = SubResource( 1 )
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, -68.4996, 14.4363, 0 )
 light_energy = 1.64
 light_indirect_energy = 2.28
+
 [connection signal="remove_terrain" from="Player" to="." method="_on_Player_remove_terrain"]

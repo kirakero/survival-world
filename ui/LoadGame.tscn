@@ -1,0 +1,145 @@
+[gd_scene load_steps=5 format=2]
+
+[ext_resource path="res://fonts/menu.tres" type="DynamicFont" id=1]
+[ext_resource path="res://texture/9SliceSprites-4.jpg" type="Texture" id=2]
+[ext_resource path="res://texture/button.png" type="Texture" id=3]
+[ext_resource path="res://ui/LoadGame.gd" type="Script" id=4]
+
+[node name="LoadGame" type="Control"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource( 4 )
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="NinePatchRect" type="NinePatchRect" parent="."]
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+margin_left = -250.0
+margin_top = -300.0
+margin_right = 250.0
+margin_bottom = 300.0
+rect_min_size = Vector2( 500, 600 )
+texture = ExtResource( 2 )
+patch_margin_left = 55
+patch_margin_top = 55
+patch_margin_right = 55
+patch_margin_bottom = 55
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="VBoxContainer" type="VBoxContainer" parent="NinePatchRect"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+margin_left = 60.0
+margin_top = 60.0
+margin_right = -60.0
+margin_bottom = -60.0
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="LoadTitle" type="Label" parent="NinePatchRect/VBoxContainer"]
+margin_right = 380.0
+margin_bottom = 31.0
+custom_fonts/font = ExtResource( 1 )
+text = "Load Game"
+align = 1
+
+[node name="VBoxContainer" type="VBoxContainer" parent="NinePatchRect/VBoxContainer"]
+margin_top = 35.0
+margin_right = 380.0
+margin_bottom = 275.0
+rect_min_size = Vector2( 380, 240 )
+
+[node name="CreateTitle" type="Label" parent="NinePatchRect/VBoxContainer"]
+margin_top = 279.0
+margin_right = 380.0
+margin_bottom = 310.0
+custom_fonts/font = ExtResource( 1 )
+text = "Create Game"
+align = 1
+
+[node name="NameLabel" type="Label" parent="NinePatchRect/VBoxContainer"]
+margin_top = 314.0
+margin_right = 380.0
+margin_bottom = 328.0
+text = "World Name"
+
+[node name="NameInput" type="LineEdit" parent="NinePatchRect/VBoxContainer"]
+margin_top = 332.0
+margin_right = 380.0
+margin_bottom = 356.0
+text = "test"
+
+[node name="SeedLabel" type="Label" parent="NinePatchRect/VBoxContainer"]
+margin_top = 360.0
+margin_right = 380.0
+margin_bottom = 374.0
+text = "Seed"
+
+[node name="SeedInput" type="LineEdit" parent="NinePatchRect/VBoxContainer"]
+margin_top = 378.0
+margin_right = 380.0
+margin_bottom = 402.0
+
+[node name="CreateButton" type="TextureButton" parent="NinePatchRect/VBoxContainer"]
+margin_left = 80.0
+margin_top = 406.0
+margin_right = 300.0
+margin_bottom = 461.0
+rect_min_size = Vector2( 220, 55 )
+size_flags_horizontal = 4
+texture_normal = ExtResource( 3 )
+texture_pressed = ExtResource( 3 )
+texture_disabled = ExtResource( 3 )
+expand = true
+
+[node name="Create" type="Label" parent="NinePatchRect/VBoxContainer/CreateButton"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+custom_fonts/font = ExtResource( 1 )
+text = "Create"
+align = 1
+valign = 1
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="Template" type="Control" parent="."]
+visible = false
+margin_right = 40.0
+margin_bottom = 40.0
+
+[node name="GameOptionButton" type="TextureButton" parent="Template"]
+margin_left = 402.0
+margin_top = 95.0
+margin_right = 622.0
+margin_bottom = 150.0
+rect_min_size = Vector2( 220, 55 )
+size_flags_horizontal = 4
+texture_normal = ExtResource( 3 )
+texture_pressed = ExtResource( 3 )
+texture_disabled = ExtResource( 3 )
+expand = true
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="GameOptionTitle" type="Label" parent="Template/GameOptionButton"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+custom_fonts/font = ExtResource( 1 )
+text = "Create"
+align = 1
+valign = 1
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[connection signal="tree_entered" from="." to="." method="_on_LoadGame_tree_entered"]
+[connection signal="pressed" from="NinePatchRect/VBoxContainer/CreateButton" to="." method="_on_CreateButton_pressed"]

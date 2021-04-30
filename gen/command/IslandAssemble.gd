@@ -11,8 +11,10 @@ func run(args: Dictionary, result, _coordinator) -> Dictionary:
 	var rng = RandomNumberGenerator.new()
 	rng.seed = args['seed']
 	var center = args['poisson/size_v2'] * 0.5
-	var margin = ceil(args['poisson/basic_size_v2'])
+	
 	var matched = args['indexed']
+	var chunk_size = args['chunk_size']
+	var margin = ceil(args['poisson/basic_size_v2'])
 	
 	var islands = []
 	
@@ -47,8 +49,9 @@ func run(args: Dictionary, result, _coordinator) -> Dictionary:
 
 		var extent = Rect2(int(extent_low.x), int(extent_low.y), 0, 0)
 		extent.end = Vector2(int(extent_high.x), int(extent_high.y))
+		print('margin ', margin)
 		extent = extent.grow(margin)
-
+		
 #		# island spacing
 #		var dir = (extent.position + extent.size * 0.5) - center
 #		var mag = abs(dir.distance_to(Vector2.ZERO) / center.distance_to(Vector2.ZERO) * spread)

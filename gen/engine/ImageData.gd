@@ -9,10 +9,6 @@ var renderer: Renderer
 var format
 var _silence = true
 
-#var shader_stale = false
-#signal render_done
-#signal command_done
-
 # Pool Array Grid
 func _init(_size, _format, init_val = 0, _pa = PoolByteArray(), _bitdepth = 4):
 	if _pa.size() == 0:

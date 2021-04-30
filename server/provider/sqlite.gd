@@ -16,7 +16,6 @@ func _connect():
 		return
 	db = SQLite.new()
 	db.path = db_name
-	db.verbose_mode = true
 	# Open the database as usual.
 	db.open_db()
 	
@@ -34,7 +33,7 @@ func _disconnect():
 	game = null
 
 func _is_connected():
-	if connected_to == game:
+	if connected_to == game and connected_to != null:
 		return true
 	
 	return false
@@ -73,12 +72,17 @@ func conn_delete(data: Dictionary):
 
 # create a world (provided the game is empty)	
 func world_post(data: Dictionary):
-	if not _is_connected():
-		return _error(data, 'Not connected')
+	if _is_connected():
+		return _error(data, 'Connected to another game')
 	# make sure the database is empty
 	# SELECT name FROM sqlite_master WHERE type='table' AND name='{table_name}'
-	if db.select_rows('sqlite_master', "type='table' AND name='config'", ["*"]).size() == 1:
+	var dir = Directory.new()
+	if dir.file_exists(str(db_name, '.db')):
 		return _error(data, 'Game exists')
+	
+	game = data['newgame']
+	db_name = str(DB_DATA_DIR, game)
+	_connect()
 	
 	# create the tables for storing basic game data and the map
 	var config_table = ConfigData.table_definition()
@@ -92,12 +96,13 @@ func world_post(data: Dictionary):
 	var chunk_table = ChunkData.table_definition()
 	db.create_table(chunk_table['name'], chunk_table['def'])
 	Chunks.add_indexes()
-	db.query('BEGIN TRANSACTION;')
-	var pba = PoolByteArray([0])
-	for x in range(0, data['world_size'], data['chunk_size']):
-		for y in range(0, data['world_size'], data['chunk_size']):
-			Chunks.insert(Vector2(x, y), pba)
-	db.query('COMMIT;')
+#	db.query('BEGIN TRANSACTION;')
+#	var pba = PoolByteArray([0])
+#	var world_half = data['world_size'] * 0.5
+#	for x in range(-world_half, world_half, data['chunk_size']):
+#		for y in range(-world_half, world_half, data['chunk_size']):
+#			Chunks.insert(Vector2(x, y), pba)
+#	db.query('COMMIT TRANSACTION;')
 	return _okay(data, {})
 
 # get a world ie. load its settings
@@ -134,7 +139,7 @@ func multichunk_post(data: Dictionary):
 		return _error(data, 'Not connected')
 	db.query('BEGIN TRANSACTION;')
 	for item in data['data']:
-		Chunks.update(item['position'], item['chunk'])
+		Chunks.insert(item['position'], item['chunk'])
 	db.query('COMMIT;')
 	return _okay(data, {})
 	

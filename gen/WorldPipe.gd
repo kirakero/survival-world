@@ -13,6 +13,9 @@ static func pipeline(args: Dictionary, parent: Node):
 	# how many times we will upsample the poisson basemap (power of 2)
 	args['basemap/upsample_steps'] = 16
 	
+	if not args.has('chunk_size'):
+		args['chunk_size'] = 32
+	
 	# this is the size we will generate using poisson
 	var psize = args['basemap/size'] / args['basemap/upsample_steps']
 	args['poisson/size_v2'] = Vector2(psize, psize)
@@ -138,7 +141,7 @@ static func pipeline(args: Dictionary, parent: Node):
 			'command': preload("res://gen/command/IslandAssemble.gd").new(),
 		},
 		# inputs
-		'pass': ['poisson/size_v2', 'poisson/basic_size_v2', 'indexed', 'seed'],
+		'pass': ['poisson/size_v2', 'poisson/basic_size_v2', 'indexed', 'seed', 'chunk_size'],
 		# outputs
 		'merge': ['islands'],
 	})

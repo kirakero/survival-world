@@ -1,5 +1,5 @@
 extends Spatial
-class_name Chunk
+class_name Chunk1
 
 var mesh_instance
 var noise

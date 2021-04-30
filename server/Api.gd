@@ -2,21 +2,32 @@ extends Node
 class_name Api
 
 # this is the ID of the map
-var game
+var game setget set_game
+
 # this is the provider for the world data
 var provider: Reference
 # character information will be saved in a separate DB instance on the client side
 
+const DB_DATA_DIR = 'user://savegame/'
+
 signal world_post_done(result)
 signal chunk_post_done(result)
+signal multichunk_post_done(result)
 signal chunk_get_done(result)
 
-func _init(_game, _provider):
-	game = _game
+func _init(_provider):
 	provider = _provider
+
+func set_game(_game):
+	if game != null:
+		provider.conn_delete()
+	
+	game = _game
+	provider.conn_post({'game': _game})
 
 # standardize the request object
 func invoke(endpoint: String, data: Dictionary):
+	print ('invoke', endpoint)
 	data['game'] = game
 	data['_sender'] = self
 	data['_callback'] = str(endpoint, '_done')
@@ -26,6 +37,24 @@ func invoke(endpoint: String, data: Dictionary):
 func done(signal_name, result, code):
 	emit_signal(signal_name, { 'data': result, 'status': code })
 	
+# lists the worlds saved locally
+func sync_my_world_index() -> Array:
+	var dir = Directory.new()
+	if not dir.dir_exists(DB_DATA_DIR):
+		dir.make_dir(DB_DATA_DIR)
+	dir.open(DB_DATA_DIR)
+	dir.list_dir_begin()
+	var files = []
+	while true:
+		var file = dir.get_next()
+		if file == "":
+			break
+		elif not file.begins_with("."):
+			files.append(file.get_basename())
+
+	dir.list_dir_end()
+	return files
+
 # when creating a brand new world to save locally
 func async_world_post(_newgame, _seed, _world_size, _chunk_size):
 	invoke('world_post', {

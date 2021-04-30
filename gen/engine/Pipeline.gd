@@ -75,7 +75,7 @@ func _exec(_thread: Thread):
 					result[_result[i]['_key']] = _result[i]
 				if not _silence:
 					print('batch done')
-				batch.queue_free()
+#				batch.queue_free()
 				
 			else:
 				# job['pipeline'] contains the Pipeline we need to run
@@ -94,7 +94,7 @@ func _exec(_thread: Thread):
 				pipeline.run(coordinator)
 				
 				result = yield(pipeline, "done")
-				pipeline.queue_free()
+#				pipeline.queue_free()
 			
 			complete = false
 			if job.has('merge'):

@@ -33,7 +33,7 @@ func insert(position: Vector2, chunk: PoolByteArray):
 	})
 
 func update(position: Vector2, chunk: PoolByteArray):
-	db.update_rows(TABLE, "pos_x = % AND pos_y = %" % [int(position.x), int(position.y)], {
+	db.update_rows(TABLE, "pos_x = %s AND pos_y = %s" % [int(position.x), int(position.y)], {
 		'chunk': chunk,
 		'updated_at': OS.get_system_time_msecs(),
 	})
