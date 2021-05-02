@@ -14,7 +14,7 @@ var disable_optimization
 const OP_ADD = true
 const OP_SUBTRACT = false
 
-func _init(_x, _y, _size, _value, _disable_optimization = false):
+func _init(_x, _y, _size, _value = false, _disable_optimization = false):
 	x = _x
 	y = _y
 	value = _value

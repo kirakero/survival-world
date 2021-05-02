@@ -37,6 +37,8 @@ var state_provider: Node
 var frameware: = []
 # character information will be saved in a separate DB instance on the client side
 
+var dirty_objects_mutex: Mutex
+
 const DB_DATA_DIR = 'user://savegame/'
 
 signal net_failure
@@ -53,6 +55,7 @@ signal chunk_get_done(result)
 
 func _init(_world_provider):
 	world_provider = _world_provider
+	dirty_objects_mutex = Mutex.new()
 
 var server_started = false
 var server_port
@@ -83,9 +86,8 @@ func start_server( game, _networked = false, password = null, port = 2480, max_p
 	
 	Global.config = config
 	
-	frameware.append( load("res://scripts/Frameware/SyncPlayers.gd").new( self ) )
-	frameware.append( load("res://scripts/Frameware/SyncChunks.gd").new( self ) )
-	server = load("res://scripts/Frameware/Server.gd").new( self )
+	server = load("res://scripts/Server.gd").new( self )
+	
 	get_tree().get_root().add_child( server )
 	
 	emit_signal("server_loaded")
@@ -267,6 +269,13 @@ var dirty_objects = [
 	[],	
 	[],
 ]
+var dirty_objects_client = [
+	[],
+	[],
+	[],
+	[],
+	[],
+]
 
 # object's 'ephemeral' data (like physics)
 var physics = [
@@ -298,9 +307,14 @@ func tx_objects(_data: Dictionary):
 remote func rx_objects(_data: Dictionary):
 	print('rx_objects   ', _data)
 	var sender_id = get_tree().get_rpc_sender_id()
-	for item in _data[TX_DATA]:
-		objects[ _data[TX_TYPE] ][ item[0] ] = item[1]
-		dirty_objects.append([ sender_id, _data[TX_TYPE] , item[0] ])
+	if _data[TX_INTENT] == INTENT_CLIENT:
+		for item in _data[TX_DATA]:
+			objects[ _data[TX_TYPE] ][ item[0] ] = item[1]
+			dirty_objects_client.append([ sender_id, _data[TX_TYPE] , item[0] ])
+	else:
+		for item in _data[TX_DATA]:
+			objects[ _data[TX_TYPE] ][ item[0] ] = item[1]
+			dirty_objects.append([ sender_id, _data[TX_TYPE] , item[0] ])
 
 func tx_physics(_data: Dictionary):
 	assert(_data.has(TX_ID) && _data.has(TX_TYPE) && _data.has(TX_DATA))
@@ -314,22 +328,6 @@ remote func rx_physics(_data: Dictionary):
 
 ###############################################################################
 
-func send_player(_data: Dictionary):
-	rpc_invoke(1, "recv_player", _data)
-
-# called for remote players to update their local position every server frame
-remote func recv_player(_data: Dictionary):
-	print('recv_player', _data)
-	var sender_id = get_tree().get_rpc_sender_id()
-	players[sender_id] = _data
-
-# contains an array of player IDs that are visible on this peer
-# only called when its updated
-remote func recv_visible_player(_data: Array):
-	print('recv_visibility')
-	local_visible_players = _data
-
-
 static func make_chunk_key(x, y):
 	return '%s,%s' % [x, y]
 
@@ -337,30 +335,3 @@ static func strip_meta(data):
 	data.erase('_key')
 	data.erase('_callback')
 	return data
-#	if not local_server:
-#		return
-#	counter = counter + delta
-#	if counter < 5.0:
-#		return
-#	counter = 0.0
-#	# for each player, calculate objects visible by range and send
-#	for p_key in players.keys():
-#		var p_key_int = int(p_key)
-#		var new_visibility = []
-#		for o_key in players.keys():
-#			if o_key == p_key:
-#				continue
-#			var o_key_int = int(o_key)
-#			if players[p_key]['P'].distance_to(players[o_key]['P']) < max_radius:
-#				new_visibility.append(o_key)
-#				# transmit player information
-#				if p_key_int != my_id:
-#					print(['rpc_unreliable_id', p_key_int, 'recv_player', o_key])
-##					rpc_unreliable_id(p_key_int, 'recv_player', players[o_key])
-#
-#		# use a reliable method to update the client when player spawns have changed
-#		new_visibility.sort()
-#		if new_visibility != world_visible[str(p_key)]['players']:
-#			world_visible[str(p_key)]['players'] = new_visibility
-#			print(['rpc_id', p_key_int, 'recv_visible_player', new_visibility])
-##				rpc_id(p_key, 'recv_visible_player', new_visibility)
