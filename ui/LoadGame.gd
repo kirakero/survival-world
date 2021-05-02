@@ -19,10 +19,9 @@ func _on_LoadGame_tree_entered():
 	rng.randomize()
 	$NinePatchRect/MarginContainer/VBoxContainer/SeedInput.text = str(rng.randi_range(1000000,9999999))
 	
-
-	Global.api.local_server = true
-	Global.api.send_player({'P': Vector3(1, 1, 1)})
-	print(Global.api.players)
+#
+#	Global.api.local_server = true
+#	Global.api.send_player({'P': Vector3(1, 1, 1)})
 
 
 func _on_GameOptionButton_pressed(button):
@@ -53,5 +52,7 @@ func _on_CreateButton_pressed():
 func _on_StartButton_pressed():
 	if selected != null:
 		$NinePatchRect.visible = false
-		Global.load_world( selected )
+		var server_start = $NinePatchRect/MarginContainer/VBoxContainer/CheckBox.pressed
+		var server_password = $NinePatchRect/MarginContainer/VBoxContainer/ServerPWInput.text
+		Global.start_local( selected, server_start, server_password )
 

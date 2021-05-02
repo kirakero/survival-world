@@ -1,16 +1,48 @@
 extends Node
 class_name Api
 
+
+const TYPE_PLAYER = 0		# this is a Player
+const TYPE_RESOURCE = 1 	# this is a body in the environment that might move
+const TYPE_REMOVED = 2 		# this is a default body in the environment that was altered
+const TYPE_CHUNK = 3 		# this is a map chunk
+const TYPE_TERRAIN = 4 		# this is a single map height
+
+const TX_ID = 'I'
+const TX_TYPE = 'T'
+const TX_DATA = 'D'
+const TX_TIME = 't'
+const TX_ERASE = 'E' # erase mode
+const TX_INTENT = 'i'
+
+const INTENT_CLIENT = 0		# objects in the local/player domain
+const INTENT_SERVER = 1		# objects in the server/world domain
+
+const DIRTY_SENDER = 0
+const DIRTY_TYPE = 1
+const DIRTY_ID = 2
+
+const TX_PHYS_POSITION = 'P'
+
+
 # this is the ID of the map
 var game setget set_game
 var player setget set_player
+var config
 
 # this is the world_provider for the world data
 var world_provider: Reference
 var state_provider: Node
+
+var frameware: = []
 # character information will be saved in a separate DB instance on the client side
 
 const DB_DATA_DIR = 'user://savegame/'
+
+signal net_failure
+
+signal server_loaded
+signal client_loaded
 
 signal world_get_done(result)
 signal world_post_done(result)
@@ -22,14 +54,80 @@ signal chunk_get_done(result)
 func _init(_world_provider):
 	world_provider = _world_provider
 
-func _init_server():
-	
-	pass
+var server_started = false
+var server_port
+var server_max_players
+var server = null
+var networked = null
 
-func _init_client():
+func start_server( game, _networked = false, password = null, port = 2480, max_players = 10 ):
 	
+	# World Data is LOCAL
+	world_provider = SQLiteProvider.new()
 	
-	pass
+	if (networked):
+		server_port = port
+		server_max_players = max_players
+		
+		var peer = NetworkedMultiplayerENet.new()
+		peer.create_server(port, max_players)
+		get_tree().network_peer = peer
+		
+		_init_network()
+	
+	set_game(game)
+	async_world_get()
+	config = yield(self, "world_get_done")['data']
+	config.chunk_size = int(config.chunk_size)
+	config.world_size = int(config.world_size)
+	
+	Global.config = config
+	
+	frameware.append( load("res://scripts/Frameware/SyncPlayers.gd").new( self ) )
+	frameware.append( load("res://scripts/Frameware/SyncChunks.gd").new( self ) )
+	server = load("res://scripts/Frameware/Server.gd").new( self )
+	get_tree().get_root().add_child( server )
+	
+	emit_signal("server_loaded")
+
+func start_client( host = null, password = null, port = 2480 ):
+	
+	if host != null:
+		local_server = false
+		var peer = NetworkedMultiplayerENet.new()
+		peer.create_client(host, port)
+		get_tree().network_peer = peer
+		
+		# World Data is REMOTE
+		assert(false)
+		world_provider = RemoteWorldProvider.new()
+	else:
+		local_server = true
+		_player_connected()
+	
+	emit_signal("client_loaded")
+	
+
+func _player_connected():
+	# the client has connected to a server (may or may not be local
+	# the client should transmit player data so the server can start processing
+	if networked:
+		my_id = get_tree().get_network_unique_id()
+	var my_data = {
+		"name": "kero",
+		TX_PHYS_POSITION: Vector3(-440, 1, 128)
+	}
+	rpc_invoke_reliable(1, 'tx_object', { TX_ID: my_id, TX_TYPE: TYPE_PLAYER, TX_DATA: my_data })
+
+
+
+
+
+func _connected_fail():
+	emit_signal("net_failure", "failed to connect")
+
+func _server_disconnected():
+	emit_signal("net_failure", "disconnected")
 
 func _init_network():
 	get_tree().connect("network_peer_connected", self, "_player_connected")
@@ -37,7 +135,7 @@ func _init_network():
 	get_tree().connect("connected_to_server", self, "_connected_ok")
 	get_tree().connect("connection_failed", self, "_connected_fail")
 	get_tree().connect("server_disconnected", self, "_server_disconnected")
-	
+	networked = true
 
 func set_game(_game):
 	if game != null and world_provider != null:
@@ -59,6 +157,7 @@ func invoke(endpoint: String, data: Dictionary):
 	world_provider.call_deferred(endpoint, data)
 
 func done(signal_name, result, code):
+	print('api done ',signal_name, result)
 	emit_signal(signal_name, { 'data': result, 'status': code })
 	
 # lists the worlds saved locally
@@ -123,7 +222,7 @@ func async_multichunk_get(_data: Array):
 ### STATE INOUT
 
 var local_server = false
-var my_id = 0
+var my_id = 1
 # connected players
 var players = {
 	'123': {'P': Vector3(2, 2, 2)}
@@ -138,81 +237,70 @@ var local_visible_players = {}
 var max_radius = 80
 
 func rpc_invoke(id, method, data):
-	if local_server and id == 1:
+	print('rpc_invoke', id, method)
+	if local_server:
 		call_deferred(method, data)
 	else:
 		rpc_unreliable_id(id, method, data)
 
-func _player_connected(id):
-	# Called on both clients and server when a peer connects. Send my info to it.
-#    rpc_id(id, "register_player", my_info)
-	pass
-
-func _player_disconnected(id):
-	#player_info.erase(id) # Erase player from info.
-	pass
-
-func _connected_ok():
-	pass # Only called on clients, not server. Will go unused; not useful here.
-
-func _server_disconnected():
-	pass # Server kicked us; show error and abort.
-
-func _connected_fail():
-	pass # Could not even connect to server; abort.
-
-remote func register_player(info):
-	# Get the id of the RPC sender.
-	var id = get_tree().get_rpc_sender_id()
-	# Store the info
-#    player_info[id] = info
-	pass
-	
+func rpc_invoke_reliable(id, method, data):
+	print('rpc_invoke_reliable', id, method)
+	if local_server:
+		call_deferred(method, data)
+	else:
+		rpc_id(id, method, data)
 
 ######### OBJECT DATA #########################################################
-# 
-#
-#
-const TYPE_PLAYER = 0		# this is a Player
-const TYPE_RESOURCE = 1 	# this is a body in the environment that might move
-const TYPE_REMOVED = 2 		# this is a default body in the environment that was altered
-const TYPE_TERRAIN = 3 		# this is a height change
-
-const TX_ID = 'I'
-const TX_TYPE = 'T'
-const TX_DATA = 'D'
-
-const DIRTY_SENDER = 0
-const DIRTY_TYPE = 1
-const DIRTY_ID = 2
-
-const TX_PHYS_POSITION = 'P'
 
 # object's 'true' data
 var objects = [
 	{}, # PLAYER
 	{}, # RESOURCE - saves to disk
 	{}, # REMOVED  - saves to disk
+	{}, # CHUNK  - saves to disk
 	{}, # TERRAIN  - saves to disk
 ]
-var dirty_objects = []
+var dirty_objects = [
+	[],
+	[],
+	[],
+	[],	
+	[],
+]
 
 # object's 'ephemeral' data (like physics)
 var physics = [
 	{}, # PLAYER
 	{}, # RESOURCE - saves to disk via local callback to object
 ]
-var dirty_physics = []
+var dirty_physics = [
+	[],
+	[]
+]
 
 func tx_object(_data: Dictionary):
 	assert(_data.has(TX_ID) && _data.has(TX_TYPE) && _data.has(TX_DATA))
+	_data[ TX_TIME ] = OS.get_system_time_msecs() #todo
 	rpc_invoke(1, "rx_object", _data)
 
 remote func rx_object(_data: Dictionary):
 	print('rx_object', _data)
 	var sender_id = get_tree().get_rpc_sender_id()
-	physics[ _data[TX_TYPE] ][ _data[TX_ID] ] = _data[TX_DATA]
+	objects[ _data[TX_TYPE] ][ _data[TX_ID] ] = _data[TX_DATA]
 	dirty_objects.append([ sender_id, _data[TX_TYPE] , _data[TX_ID] ])
+	if _data[TX_TYPE] == TYPE_PLAYER:
+		physics[ _data[TX_TYPE] ][ _data[TX_ID] ] = _data[TX_DATA]
+
+func tx_objects(_data: Dictionary):
+	assert(_data.has(TX_TYPE) && _data.has(TX_DATA))
+	rpc_invoke(1, "rx_objects", _data)
+
+remote func rx_objects(_data: Dictionary):
+	print('rx_objects   ', _data)
+	var sender_id = get_tree().get_rpc_sender_id()
+	for item in _data[TX_DATA]:
+		objects[ _data[TX_TYPE] ][ item[0] ] = item[1]
+		dirty_objects.append([ sender_id, _data[TX_TYPE] , item[0] ])
 
 func tx_physics(_data: Dictionary):
 	assert(_data.has(TX_ID) && _data.has(TX_TYPE) && _data.has(TX_DATA))
@@ -242,33 +330,37 @@ remote func recv_visible_player(_data: Array):
 	local_visible_players = _data
 
 
+static func make_chunk_key(x, y):
+	return '%s,%s' % [x, y]
 
-var counter = 0.0
-func _physics_process(delta):
-	if not local_server:
-		return
-	counter = counter + delta
-	if counter < 5.0:
-		return
-	counter = 0.0
-	# for each player, calculate objects visible by range and send
-	for p_key in players.keys():
-		var p_key_int = int(p_key)
-		var new_visibility = []
-		for o_key in players.keys():
-			if o_key == p_key:
-				continue
-			var o_key_int = int(o_key)
-			if players[p_key]['P'].distance_to(players[o_key]['P']) < max_radius:
-				new_visibility.append(o_key)
-				# transmit player information
-				if p_key_int != my_id:
-					print(['rpc_unreliable_id', p_key_int, 'recv_player', o_key])
-#					rpc_unreliable_id(p_key_int, 'recv_player', players[o_key])
-		
-		# use a reliable method to update the client when player spawns have changed
-		new_visibility.sort()
-		if new_visibility != world_visible[str(p_key)]['players']:
-			world_visible[str(p_key)]['players'] = new_visibility
-			print(['rpc_id', p_key_int, 'recv_visible_player', new_visibility])
-#				rpc_id(p_key, 'recv_visible_player', new_visibility)
+static func strip_meta(data):
+	data.erase('_key')
+	data.erase('_callback')
+	return data
+#	if not local_server:
+#		return
+#	counter = counter + delta
+#	if counter < 5.0:
+#		return
+#	counter = 0.0
+#	# for each player, calculate objects visible by range and send
+#	for p_key in players.keys():
+#		var p_key_int = int(p_key)
+#		var new_visibility = []
+#		for o_key in players.keys():
+#			if o_key == p_key:
+#				continue
+#			var o_key_int = int(o_key)
+#			if players[p_key]['P'].distance_to(players[o_key]['P']) < max_radius:
+#				new_visibility.append(o_key)
+#				# transmit player information
+#				if p_key_int != my_id:
+#					print(['rpc_unreliable_id', p_key_int, 'recv_player', o_key])
+##					rpc_unreliable_id(p_key_int, 'recv_player', players[o_key])
+#
+#		# use a reliable method to update the client when player spawns have changed
+#		new_visibility.sort()
+#		if new_visibility != world_visible[str(p_key)]['players']:
+#			world_visible[str(p_key)]['players'] = new_visibility
+#			print(['rpc_id', p_key_int, 'recv_visible_player', new_visibility])
+##				rpc_id(p_key, 'recv_visible_player', new_visibility)

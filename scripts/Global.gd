@@ -17,17 +17,19 @@ func _ready():
 	var root = get_tree().get_root()
 	current_scene = root.get_child(root.get_child_count() - 1)
 
-func load_world(game):
-	print('load world', game)
+func start_local( game, server, password ):
 	goto_scene("res://scenes/LoadScene.tscn")
-	
 	yield(self, "scene_loaded")
-	api.set_game(game)
-	api.async_world_get()
-	config = yield(api, "world_get_done")['data']
-	config.chunk_size = int(config.chunk_size)
-	print(config)
+	
+	api.start_server( game, server, password, 2480 )
+	yield(api, "server_loaded")
+	
+	api.start_client()
+	yield(api, "client_loaded")
 	goto_scene("res://scenes/GameScene.tscn", "world_loaded")
+
+	
+
 
 func create_world(settings: Dictionary):
 	print('create world', settings)
@@ -90,7 +92,7 @@ func create_world(settings: Dictionary):
 		if api_res['status'] == 400:
 			assert(false)
 	pipe.queue_free()
-	load_world(settings['newgame'])
+#	load_world(settings['newgame'])
 	## store the map
 	pass
 	

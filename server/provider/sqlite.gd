@@ -119,6 +119,12 @@ func chunk_get(data: Dictionary):
 	var res = Chunks.first(data['position'])
 	return _okay(data, res)
 
+func _chunk_get(position: Vector2):
+	if not _is_connected():
+		return {}
+	var res = Chunks.first(position)
+	return res
+
 # update a single chunk
 func chunk_post(data: Dictionary):
 	if not _is_connected():

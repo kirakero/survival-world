@@ -47,3 +47,5 @@ func _init():
 	testquad5.debug()
 
 	print('-----------')
+	
+	print (testquad3.query(0, 0, 16))

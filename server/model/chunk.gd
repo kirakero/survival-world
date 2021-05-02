@@ -38,9 +38,12 @@ func update(position: Vector2, chunk: PoolByteArray):
 		'updated_at': OS.get_system_time_msecs(),
 	})
 
-func first(position: Vector2) -> Dictionary:
-	var query = "pos_x = '%' and pos_y = '%'" % [position.x, position.y]
-	return db.select_rows(TABLE, query, ["*"])[0]
+func first(position: Vector2):
+	var query = "pos_x = '%s' and pos_y = '%s'" % [position.x, position.y]
+	var res = db.select_rows(TABLE, query, ["*"])
+	if res.size():
+		return res[0]
+	return {}
 
 func where(positions: Array) -> Array:
 	var values = PoolStringArray()
