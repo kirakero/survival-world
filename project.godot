@@ -107,7 +107,7 @@ _global_script_classes=[ {
 "base": "Reference",
 "class": "QuadTree",
 "language": "GDScript",
-"path": "res://scripts/Utility/Quadtree.gd"
+"path": "res://scripts/Utility/QuadTreeNode.gd"
 }, {
 "base": "Node",
 "class": "Renderer",

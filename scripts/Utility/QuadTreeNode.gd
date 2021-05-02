@@ -1,4 +1,5 @@
 extends Reference
+class_name QuadTree
 
 var child = []
 var size
@@ -20,7 +21,7 @@ func _init(_x, _y, _size, _value):
 	assert (size > 0)
 
 func setval(_value):
-	print([x, y, ', size', size, 'setval to', _value])
+#	print([x, y, ', size', size, 'setval to', _value])
 	child = []
 	value = _value
 
@@ -32,6 +33,14 @@ func getval():
 func showval():
 	return '%s, %s, size %s == %s' % [x, y, size, getval()]
 
+func add_children(value):
+	child = [
+			NODE.new(x, y, half, value),
+			NODE.new(x + half, y, half, value),
+			NODE.new(x, y + half, half, value),
+			NODE.new(x + half, y + half, half, value),
+	]
+
 func operation(op, _x, _y, _s = 16 ):
 #	print('start op', [op, _x, _y, _s] )
 	assert(_s > 1)
@@ -40,12 +49,7 @@ func operation(op, _x, _y, _s = 16 ):
 		return
 
 	if child == []:
-		child = [
-			NODE.new(x, y, half, value),
-			NODE.new(x + half, y, half, value),
-			NODE.new(x, y + half, half, value),
-			NODE.new(x + half, y + half, half, value),
-		]
+		add_children(value)
 	
 	# 1st quad
 	if _x < x + half and _y < y + half: 
@@ -79,27 +83,71 @@ func operation(op, _x, _y, _s = 16 ):
 		if c.value != op or c.child.size() == 4:
 			return
 	setval(op)
-	
-# returns a new tree where the ORIGNAL tree was NOT IN the GIVEN tree
-func intersect(tree, result = null):
-	assert(tree.size == size)
-	if result == null:
-		print('result is null')
-		result = NODE.new(0, 0, size, false)
-	
-	if value == tree.value and child.size() == 0:
-		# nothing - equal
-		pass
-	elif child.size() == 0:
-		result.value = true
-	else:
-		result.child = [null, null, null, null]
-		assert(result.child[0] == null)
+
+func safeval():
+	if !value or child.size() == 4:
+		return false
+	return true
+
+func copy():
+	var result = NODE.new(x, y, size, safeval())
+#	print('copy', [x, y, size, safeval(), child.size()])
+#	if x == 0 and y == 0 and size == 8:
+#		assert(value == false)
+	if child.size() == 4:
 		for quad in range(4):
-			print('add quad', [child[quad].x, child[quad].y, child[quad].size])
-			result.child[quad] = NODE.new(child[quad].x, child[quad].y, child[quad].size, false)
-			child[quad].intersect(tree.child[quad], result.child[quad])
+			result.child.append(child[quad].copy())
+			
 	
+	return result
+
+
+const INTERSECT_KEEP_A = 1
+const INTERSECT_KEEP_B = 2
+const INTERSECT_BOTH = 3
+
+# returns a new tree where the ORIGNAL tree was NOT IN the GIVEN tree
+static func intersect(treeA, treeB, mode = INTERSECT_BOTH, init = false):
+	assert(treeA.size == treeB.size)
+	var result = treeA.NODE.new(treeA.x, treeA.y, treeA.size, init)
+	
+	if treeA.child.size() == 0 and treeB.child.size() == 0:
+		if treeA.value != treeB.value:
+			if (mode & INTERSECT_BOTH) == INTERSECT_BOTH:
+				result.setval(treeA.value or treeB.value)
+			elif (mode & INTERSECT_KEEP_A) == INTERSECT_KEEP_A:
+				result.setval(treeA.value)
+			elif (mode & INTERSECT_KEEP_B) == INTERSECT_KEEP_B:
+				result.setval(treeB.value)
+	else:
+		var treeA_child = treeA.child
+		var treeB_child = treeB.child
+		
+		if treeA.child.size() == 0 and treeB.child.size() == 4:
+			treeA_child = treeA.copy()
+			treeA_child.add_children(treeA.value)
+			treeA_child = treeA_child.child
+		elif treeA.child.size() == 4 and treeB.child.size() == 0:
+			treeB_child = treeB.copy()
+			treeB_child.add_children(treeB.value)
+			treeB_child = treeB_child.child
+		
+		for quad in range(4):
+			result.child.append( intersect(treeA_child[quad], treeB_child[quad], mode) )
+		
+		# node cleanup - necessary?
+		var st_true = 0
+		var st_false = 0
+		for quad in result.child:
+			if quad.value == true:
+				st_true = st_true + 1
+			elif quad.child.size() == 0:
+				st_false = st_false + 1
+		if st_false == 4:
+			result.setval(false)
+		elif st_true == 4:
+			result.setval(true)
+			
 	return result
 
 func debug(depth = 0):
