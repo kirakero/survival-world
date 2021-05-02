@@ -66,12 +66,9 @@ func generate_chunk():
 			var b = _x + (_z + 1) * (chunk_size + 2)
 			var l = _x - 1 + _z * (chunk_size + 2)
 			var r = _x + 1 + _z * (chunk_size + 2)
-			normals[ _x - 1 + (_z - 1) * (chunk_size + 1)] = Vector3(2*(heights[l].y-heights[r].y), 4, 2*(heights[t].y-heights[b].y)).normalized()
-
-
-	for i in range(normals.size()):
-		uvs[i] = Vector2.ONE
-	
+			normals[ _x + (_z) * (chunk_size + 1)] = Vector3(2*(heights[l].y-heights[r].y), 4, 2*(heights[t].y-heights[b].y)).normalized()
+			uvs[_x + _z * (chunk_size + 1)] = Vector2(_x / (chunk_size + 0.0), _z / (chunk_size + 0.0))
+			
 	for _z in range(1, chunk_size + 2):
 		for _x in range(1, chunk_size + 2):
 			verts[vert_index] = heights[_x + _z * (chunk_size + 2)]
@@ -104,6 +101,7 @@ func generate_chunk():
 	mesh_instance = MeshInstance.new()
 	mesh_instance.mesh = mesh
 	mesh_instance.create_trimesh_collision()
+	mesh_instance.set_material_override(preload("res://scenes/uv-test.material"))
 	add_child(mesh_instance)
 	
 func generate_water():

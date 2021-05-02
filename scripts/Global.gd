@@ -11,6 +11,7 @@ signal scene_loaded
 func _init():
 	provider = SQLiteProvider.new()
 	api = Api.new(provider)
+	add_child(api)
 
 func _ready():
 	var root = get_tree().get_root()
@@ -88,7 +89,7 @@ func create_world(settings: Dictionary):
 		print (api_res)
 		if api_res['status'] == 400:
 			assert(false)
-		
+	pipe.queue_free()
 	load_world(settings['newgame'])
 	## store the map
 	pass

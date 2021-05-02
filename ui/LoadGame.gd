@@ -18,7 +18,11 @@ func _on_LoadGame_tree_entered():
 	var rng = RandomNumberGenerator.new()
 	rng.randomize()
 	$NinePatchRect/MarginContainer/VBoxContainer/SeedInput.text = str(rng.randi_range(1000000,9999999))
-		
+	
+
+	Global.api.local_server = true
+	Global.api.send_player({'P': Vector3(1, 1, 1)})
+	print(Global.api.players)
 
 
 func _on_GameOptionButton_pressed(button):

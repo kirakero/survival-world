@@ -13,7 +13,6 @@ var thread_count = 3
 var processing = false
 var mutex: Mutex
 var loaded = false 
-
 signal world_loaded
 
 func _ready():	
@@ -109,6 +108,7 @@ func load_chunks( _data ):
 func add_mesh(chunk, wanted_chunk):
 	mutex.lock()
 	add_child(chunk)
+
 	var key = str(wanted_chunk.x / chunk_size) + "," + str(wanted_chunk.y / chunk_size)
 	chunks[key] = chunk
 	unready_chunks.erase(wanted_chunk)
