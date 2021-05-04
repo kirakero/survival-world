@@ -15,6 +15,9 @@ const TX_TIME = 't'
 const TX_ERASE = 'E' # erase mode
 const TX_INTENT = 'i'
 
+const TX_UPDATED_AT = 'U' # database save time
+const TX_CHUNK_DATA = 'C' # compressed chunk data
+
 const INTENT_CLIENT = 0		# objects in the local/player domain
 const INTENT_SERVER = 1		# objects in the server/world domain
 
@@ -61,6 +64,7 @@ var server_started = false
 var server_port
 var server_max_players
 var server = null
+var client = null
 var networked = null
 
 func start_server( game, _networked = false, password = null, port = 2480, max_players = 10 ):
@@ -117,10 +121,26 @@ func _player_connected():
 		my_id = get_tree().get_network_unique_id()
 	var my_data = {
 		"name": "kero",
-		TX_PHYS_POSITION: Vector3(-440, 1, 128)
+		TX_PHYS_POSITION: Vector3(-440, 1, 128),
+		TX_TIME: 0,
 	}
 	rpc_invoke_reliable(1, 'tx_object', { TX_ID: my_id, TX_TYPE: TYPE_PLAYER, TX_DATA: my_data })
-
+	
+	# start the client services
+	# first load the world scene
+	Global.goto_scene_prepare('res://scenes/GameScene.tscn')
+#	var global = Global
+	var scene = yield(Global, "scene_prepared")
+	var player = preload('res://Player/Player.tscn').instance()
+	player.translation = my_data[TX_PHYS_POSITION]
+	scene.add_child(player)
+	# instantiate the client service
+	client = load("res://scripts/Client.gd").new( self, scene, player )
+	
+	get_tree().get_root().add_child( client )
+	
+	yield(client, "chunk_queue_empty")
+	player.physics_active = true
 
 
 
@@ -239,14 +259,14 @@ var local_visible_players = {}
 var max_radius = 80
 
 func rpc_invoke(id, method, data):
-	print('rpc_invoke', id, method)
+#	print('rpc_invoke', id, method)
 	if local_server:
 		call_deferred(method, data)
 	else:
 		rpc_unreliable_id(id, method, data)
 
 func rpc_invoke_reliable(id, method, data):
-	print('rpc_invoke_reliable', id, method)
+#	print('rpc_invoke_reliable', id, method)
 	if local_server:
 		call_deferred(method, data)
 	else:
@@ -283,8 +303,6 @@ var physics = [
 	{}, # RESOURCE - saves to disk via local callback to object
 ]
 var dirty_physics = [
-	[],
-	[]
 ]
 
 func tx_object(_data: Dictionary):
@@ -308,9 +326,14 @@ remote func rx_objects(_data: Dictionary):
 	print('rx_objects   ', _data)
 	var sender_id = get_tree().get_rpc_sender_id()
 	if _data[TX_INTENT] == INTENT_CLIENT:
+		print('intent client')
+		if client == null:
+			return
+		
+		print('intent client use')
 		for item in _data[TX_DATA]:
 			objects[ _data[TX_TYPE] ][ item[0] ] = item[1]
-			dirty_objects_client.append([ sender_id, _data[TX_TYPE] , item[0] ])
+			dirty_objects_client[ _data[TX_TYPE] ].append( item[0] )
 	else:
 		for item in _data[TX_DATA]:
 			objects[ _data[TX_TYPE] ][ item[0] ] = item[1]
@@ -318,12 +341,19 @@ remote func rx_objects(_data: Dictionary):
 
 func tx_physics(_data: Dictionary):
 	assert(_data.has(TX_ID) && _data.has(TX_TYPE) && _data.has(TX_DATA))
+	_data[ TX_DATA ][ TX_TIME ] = OS.get_system_time_msecs() #todo
 	rpc_invoke(1, "rx_physics", _data)
 
 remote func rx_physics(_data: Dictionary):
-	print('rx_physics', _data)
+#	print('rx_physics', _data)
 	var sender_id = get_tree().get_rpc_sender_id()
-	physics[ _data[TX_TYPE] ][ _data[TX_ID] ] = _data[TX_DATA]
+	
+	# update the local object if the physics are newer
+	var obj = objects[ _data[ Def.TX_TYPE ] ][ _data[ Def.TX_ID ] ]
+	if _data[ Def.TX_DATA ][ Def.TX_TIME ] > obj[ Def.TX_TIME ]: # todo
+		for _key in _data[Def.TX_DATA].keys():
+			obj[_key] = _data[Def.TX_DATA][_key]
+	
 	dirty_physics.append([ sender_id, _data[TX_TYPE] , _data[TX_ID] ])
 
 ###############################################################################
@@ -335,3 +365,13 @@ static func strip_meta(data):
 	data.erase('_key')
 	data.erase('_callback')
 	return data
+
+
+
+
+
+
+
+
+
+

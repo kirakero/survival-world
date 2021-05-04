@@ -6,6 +6,32 @@ const TABLE = 'chunks'
 
 var db: SQLite
 
+
+const TYPE_PLAYER = 0		# this is a Player
+const TYPE_RESOURCE = 1 	# this is a body in the environment that might move
+const TYPE_REMOVED = 2 		# this is a default body in the environment that was altered
+const TYPE_CHUNK = 3 		# this is a map chunk
+const TYPE_TERRAIN = 4 		# this is a single map height
+
+const TX_ID = 'I'
+const TX_TYPE = 'T'
+const TX_DATA = 'D'
+const TX_TIME = 't'
+const TX_ERASE = 'E' # erase mode
+const TX_INTENT = 'i'
+
+const TX_UPDATED_AT = 'U' # database save time
+const TX_CHUNK_DATA = 'C' # compressed chunk data
+
+const INTENT_CLIENT = 0		# objects in the local/player domain
+const INTENT_SERVER = 1		# objects in the server/world domain
+
+const DIRTY_SENDER = 0
+const DIRTY_TYPE = 1
+const DIRTY_ID = 2
+
+const TX_PHYS_POSITION = 'P'
+
 func _init(_db):
 	db = _db	
 
@@ -42,8 +68,16 @@ func first(position: Vector2):
 	var query = "pos_x = '%s' and pos_y = '%s'" % [position.x, position.y]
 	var res = db.select_rows(TABLE, query, ["*"])
 	if res.size():
-		return res[0]
-	return {}
+		return {
+			TX_PHYS_POSITION: Vector3(res[0]['pos_x'], 0, res[0]['pos_y']),
+			TX_UPDATED_AT: res[0]['updated_at'],
+			TX_CHUNK_DATA: res[0]['chunk']
+		}
+	return {
+		TX_PHYS_POSITION: Vector3(position.x, 0, position.y),
+		TX_UPDATED_AT: 0,
+		TX_CHUNK_DATA: PoolByteArray()
+	}
 
 func where(positions: Array) -> Array:
 	var values = PoolStringArray()

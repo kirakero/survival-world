@@ -50,6 +50,16 @@ _global_script_classes=[ {
 "path": "res://gen/engine/Coordinator.gd"
 }, {
 "base": "Node",
+"class": "Def",
+"language": "GDScript",
+"path": "res://scripts/Utility/Constants.gd"
+}, {
+"base": "Node",
+"class": "Fun",
+"language": "GDScript",
+"path": "res://scripts/Utility/Functions.gd"
+}, {
+"base": "Node",
 "class": "ImageData",
 "language": "GDScript",
 "path": "res://gen/engine/ImageData.gd"
@@ -158,6 +168,8 @@ _global_script_class_icons={
 "ChunkGen": "",
 "ConfigData": "",
 "Coordinator": "",
+"Def": "",
+"Fun": "",
 "ImageData": "",
 "Map": "",
 "MapSettings": "",

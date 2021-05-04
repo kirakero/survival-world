@@ -60,6 +60,17 @@ func query(_x, _y, _s):
 	
 	return res
 
+func contains(_x, _y, _s):
+	# wholey contained and true -- immediately return
+	if value and _x >= x and _y >= y and _x + _s <= x + size and _y + _s <= y + size:
+		return [self]
+
+	var res = []
+	for ch in child:
+		res.append_array( ch.contains(_x, _y, _s) )
+	
+	return res
+
 func is_empty():
 	if value == true:
 		return false

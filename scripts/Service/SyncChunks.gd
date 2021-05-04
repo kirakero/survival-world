@@ -43,7 +43,7 @@ func get_chunks(tree: QuadTree) -> Array:
 		var key = Api.make_chunk_key(chunk.x - world_half, chunk.y - world_half)
 		chunks.append([key, api.objects[ Api.TYPE_CHUNK ][ key ]])
 	
-	
+	print ('server is sending %s chunks' % chunks.size())
 	return chunks
 
 func send_chunks(pkey):

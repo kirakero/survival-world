@@ -6,6 +6,7 @@ var current_scene = null
 var config: Dictionary
 
 signal scene_loaded
+signal scene_prepared
 
 # api and provider basically always needs to be available
 func _init():
@@ -26,7 +27,6 @@ func start_local( game, server, password ):
 	
 	api.start_client()
 	yield(api, "client_loaded")
-	goto_scene("res://scenes/GameScene.tscn", "world_loaded")
 
 	
 
@@ -101,11 +101,39 @@ func create_world(settings: Dictionary):
 
 
 
-func goto_scene(path, wait_for = null):
-	call_deferred("_deferred_goto_scene", path, wait_for)
+func goto_scene(path):
+	call_deferred("_deferred_goto_scene", path)
 
+func goto_scene_prepare(path):
+	call_deferred("_deferred_goto_scene_prepare", path)
 
-func _deferred_goto_scene(path, wait_for):
+func goto_scene_commit(scene):
+	call_deferred("_deferred_goto_scene_commit", scene)
+
+func _deferred_goto_scene_prepare(path):
+	# Load the new scene.
+	var s = ResourceLoader.load(path)
+
+	# Instance the new scene.
+	var new_scene = s.instance()
+	
+	# Add it to the active scene, as child of root.
+	get_tree().get_root().add_child(new_scene)
+	emit_signal("scene_prepared", new_scene)
+	
+func _deferred_goto_scene_commit(scene):
+	# It is now safe to remove the current scene
+	current_scene.free()
+	
+	current_scene = scene
+
+	# Optionally, to make it compatible with the SceneTree.change_scene() API.
+	get_tree().set_current_scene(current_scene)
+	
+	emit_signal("scene_loaded")
+	
+
+func _deferred_goto_scene(path):
 
 
 	# Load the new scene.
@@ -114,11 +142,8 @@ func _deferred_goto_scene(path, wait_for):
 	# Instance the new scene.
 	var new_scene = s.instance()
 	
-	print('waitfor', wait_for)
-	if wait_for != null:
-		# Add it to the active scene, as child of root.
-		get_tree().get_root().add_child(new_scene)
-		yield(new_scene, wait_for)
+	# Add it to the active scene, as child of root.
+	get_tree().get_root().add_child(new_scene)
 	
 	# It is now safe to remove the current scene
 	current_scene.free()
