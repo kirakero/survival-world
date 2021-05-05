@@ -7,7 +7,7 @@ var active_world_chunk_tree: QuadTree
 var api: Api
 var world_half
 
-func _init(_api: Api, _max_range_chunk = 128, _chunk_size = 64):
+func _init(_api: Api, _max_range_chunk = 192, _chunk_size = 64):
 	api = _api
 	max_range_chunk = _max_range_chunk
 	chunk_size = _chunk_size
@@ -51,8 +51,12 @@ func send_chunks(pkey):
 	var chunks = QuadTree.new(0, 0, api.config.world_size, false)
 	var pos_x = int(player[ Api.TX_PHYS_POSITION ].x / chunk_size) * chunk_size + world_half
 	var pos_z = int(player[ Api.TX_PHYS_POSITION ].z / chunk_size) * chunk_size + world_half
-
 	chunks.operation(QuadTree.OP_ADD, pos_x - max_range_chunk, pos_z - max_range_chunk, max_range_chunk*2)
+	chunks.operation(QuadTree.OP_SUBTRACT, pos_x - max_range_chunk - chunk_size, pos_z - max_range_chunk, chunk_size)
+	chunks.operation(QuadTree.OP_SUBTRACT, pos_x + (max_range_chunk)*2 - chunk_size, pos_z - max_range_chunk, chunk_size)
+	chunks.operation(QuadTree.OP_SUBTRACT, pos_x - max_range_chunk - chunk_size, pos_z + (max_range_chunk)*2 - chunk_size, chunk_size)
+	chunks.operation(QuadTree.OP_SUBTRACT, pos_x + (max_range_chunk)*2 - chunk_size, pos_z + (max_range_chunk)*2 - chunk_size, chunk_size)
+	
 	var will_send: QuadTree = chunks
 	
 	if player_chunks.has( pkey ):
@@ -60,15 +64,19 @@ func send_chunks(pkey):
 	
 	if will_send.is_empty():
 		return
-#	else:
-#		if player_chunks.has( pkey ):
-#			print('player prior ------------')
-#			chunks.debug()
-#		print('player chunks ------------')
-#		chunks.debug()
-#		if player_chunks.has( pkey ):
-#			print('player diff ------------')
-#			will_send.debug()
+	else:
+		
+		print ('server chunk parameters', [pos_x, pos_z, max_range_chunk, chunk_size] )
+		if player_chunks.has( pkey ):
+			print('player prior ------------')
+			print(player_chunks[ pkey ].all_as_array())
+			
+		print('player chunks ------------')
+		print(chunks.all_as_array())
+		
+		if player_chunks.has( pkey ):
+			print('player diff ------------')
+			print(will_send.all_as_array())
 	
 	api.tx_objects({ 
 		Api.TX_TYPE: Api.TYPE_CHUNK,
@@ -76,7 +84,11 @@ func send_chunks(pkey):
 		Api.TX_DATA: get_chunks(will_send)
 	})
 	
-	player_chunks[ pkey ] = chunks
+	if player_chunks.has( pkey ):
+		for chunk in will_send.all():
+			player_chunks[ pkey ].operation(QuadTree.OP_ADD, chunk.x, chunk.y, chunk.size)
+	else:
+		player_chunks[ pkey ] = will_send
 
 func run():
 	# update player_visible, which is used for chunk loading and sending	

@@ -49,6 +49,12 @@ func add_children(value = false):
 func all():
 	return query(0, 0, size)
 
+func all_as_array():
+	var out = []
+	for i in query(0, 0, size):
+		out.append([i.x, i.y, i.size])
+	return out
+
 func query(_x, _y, _s):
 	# wholey contained and true -- immediately return
 	if value and _x <= x and _y <= y and _x + _s >= x + size and _y + _s >= y + size:

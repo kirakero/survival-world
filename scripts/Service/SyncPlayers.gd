@@ -10,12 +10,12 @@ func _init(_api: Api, _max_range = 192):
 
 func run():
 	# update and retransmit new player locations
-	print ('PLAYERS ', api.objects[ Api.TYPE_PLAYER ].keys())
+#	print ('PLAYERS ', api.objects[ Api.TYPE_PLAYER ].keys())
 	for pkey in api.objects[ Api.TYPE_PLAYER ].keys():
 		var player = api.objects[ Api.TYPE_PLAYER ][ pkey ]
 		var pkey_int = int(pkey)
 		
-		print(' DIRTY ', api.dirty_physics.size())
+#		print(' DIRTY ', api.dirty_physics.size())
 		## broadcast player data
 		for dirty in api.dirty_physics:
 

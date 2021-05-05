@@ -12,10 +12,9 @@ func _init(_api):
 var counter = 0.0
 func _physics_process(delta):
 	counter = counter + delta
-	if counter < 5.0:
+	if counter < 2.0:
 		return
 	counter = 0.0
-	print('server tick')
-	print(api.objects)
+#	print('server tick')
 	for service in services:
 		service.run()

@@ -100,7 +100,9 @@ func generate_chunk():
 	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arr)
 	mesh_instance = MeshInstance.new()
 	mesh_instance.mesh = mesh
+#	var msec = OS.get_ticks_msec()
 	mesh_instance.create_trimesh_collision()
+#	print("create_trimesh_collision took: ", OS.get_ticks_msec() - msec)
 	mesh_instance.set_material_override(preload("res://scenes/uv-test.material"))
 	add_child(mesh_instance)
 	

@@ -12,7 +12,7 @@ signal scene_prepared
 func _init():
 	provider = SQLiteProvider.new()
 	api = Api.new(provider)
-	add_child(api)
+	add_child(api)	
 
 func _ready():
 	var root = get_tree().get_root()
