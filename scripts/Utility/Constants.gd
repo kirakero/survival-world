@@ -7,6 +7,7 @@ const TYPE_REMOVED = 2 		# this is a default body in the environment that was al
 const TYPE_CHUNK = 3 		# this is a map chunk
 const TYPE_TERRAIN = 4 		# this is a single map height
 
+const TX_TO = 'TO'
 const TX_ID = 'I'
 const TX_TYPE = 'T'
 const TX_DATA = 'D'

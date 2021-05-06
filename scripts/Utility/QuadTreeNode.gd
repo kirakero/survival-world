@@ -87,7 +87,7 @@ func is_empty():
 	
 	return true
 
-func operation(op, _x, _y, _s = 16, _ref = false ):
+func operation(op, _x, _y, _s = 16 ):
 #	print('start op', [op, _x, _y, _s] )
 	assert(_s > 1)
 	if value == op and child.size() != 4:
@@ -97,33 +97,40 @@ func operation(op, _x, _y, _s = 16, _ref = false ):
 	if child == []:
 		add_children(value)
 	
+	var x_and_half = x + half
+	var y_and_half = y + half
+	var _x_and__s = _x + _s
+	var _y_and__s = _y + _s
+	var _x_min_x = _x - x
+	var _y_min_y = _y - y
+	
 	# 1st quad
-	if _x < x + half and _y < y + half: 
-		if _x - x <= 0 and _y - y <= 0 and _x + _s >= x + half and _y + _s >= y + half: # we cover the entire child
-			child[0].setval(op, _ref)
+	if _x < x_and_half and _y < y_and_half: 
+		if _x_min_x <= 0 and _y_min_y <= 0 and _x_and__s >= x_and_half and _y_and__s >= y_and_half: # we cover the entire child
+			child[0].setval(op)
 		else:
-			child[0].operation(op, _x, _y, _s, _ref)
+			child[0].operation(op, _x, _y, _s)
 	
 	# 2nd quad
-	if _x + _s > x + half and _y < y + half: 
-		if _x - x <= half and _y - y <= 0 and _x + _s >= x + size and _y + _s >= y + half: # we cover the entire child
-			child[1].setval(op, _ref)
+	if _x_and__s > x_and_half and _y < y_and_half: 
+		if _x_min_x <= half and _y_min_y <= 0 and _x_and__s >= x + size and _y_and__s >= y_and_half: # we cover the entire child
+			child[1].setval(op)
 		else:
-			child[1].operation(op, _x, _y, _s, _ref)
+			child[1].operation(op, _x, _y, _s)
 		
 	# 3rd quad
-	if _x < x + half and _y + _s > y + half: 
-		if _x - x <= 0 and _y - y <= half and _x + _s >= x + half and _y + _s >= y + size: # we cover the entire child
-			child[2].setval(op, _ref)
+	if _x < x_and_half and _y_and__s > y_and_half: 
+		if _x_min_x <= 0 and _y_min_y <= half and _x_and__s >= x_and_half and _y_and__s >= y + size: # we cover the entire child
+			child[2].setval(op)
 		else:
-			child[2].operation(op, _x, _y, _s, _ref)
+			child[2].operation(op, _x, _y, _s)
 
 	# 4th quad
-	if _x + _s > x + half and _y + _s > y + half: 
-		if _x - x <= half and _y - y <= half and _x + _s >= x + size and _y + _s >= y + size: # we cover the entire child
-			child[3].setval(op, _ref)
+	if _x_and__s > x_and_half and _y_and__s > y_and_half: 
+		if _x_min_x <= half and _y_min_y <= half and _x_and__s >= x + size and _y_and__s >= y + size: # we cover the entire child
+			child[3].setval(op)
 		else:
-			child[3].operation(op, _x, _y, _s, _ref)
+			child[3].operation(op, _x, _y, _s)
 
 #	if not disable_optimization:
 #		for c in child:

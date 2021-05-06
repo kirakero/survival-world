@@ -28,7 +28,12 @@ func start_local( game, server, password ):
 	api.start_client()
 	yield(api, "client_loaded")
 
+func start_remote( server, password ):
+	goto_scene("res://scenes/LoadScene.tscn")
+	yield(self, "scene_loaded")
 	
+	api.start_client( server, password )
+	yield(api, "client_loaded")
 
 
 func create_world(settings: Dictionary):

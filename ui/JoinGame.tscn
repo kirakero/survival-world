@@ -1,0 +1,106 @@
+[gd_scene load_steps=5 format=2]
+
+[ext_resource path="res://fonts/menu.tres" type="DynamicFont" id=1]
+[ext_resource path="res://texture/9SliceSprites-4.jpg" type="Texture" id=2]
+[ext_resource path="res://texture/button.png" type="Texture" id=3]
+[ext_resource path="res://ui/JoinGame.gd" type="Script" id=4]
+
+[node name="JoinGame" type="Control"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource( 4 )
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="NinePatchRect" type="NinePatchRect" parent="."]
+anchor_right = 1.0
+anchor_bottom = 1.0
+texture = ExtResource( 2 )
+patch_margin_left = 55
+patch_margin_top = 55
+patch_margin_right = 55
+patch_margin_bottom = 55
+axis_stretch_horizontal = 2
+axis_stretch_vertical = 2
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="MarginContainer" type="MarginContainer" parent="NinePatchRect"]
+anchor_left = 0.18
+anchor_top = 0.15
+anchor_right = 0.82
+anchor_bottom = 0.85
+margin_right = -0.00012207
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="VBoxContainer" type="VBoxContainer" parent="NinePatchRect/MarginContainer"]
+margin_right = 1228.0
+margin_bottom = 756.0
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="LoadTitle" type="Label" parent="NinePatchRect/MarginContainer/VBoxContainer"]
+margin_right = 1228.0
+margin_bottom = 31.0
+custom_fonts/font = ExtResource( 1 )
+text = "Join Multiplayer Game"
+align = 1
+
+[node name="ServerHostLabel" type="Label" parent="NinePatchRect/MarginContainer/VBoxContainer"]
+margin_top = 35.0
+margin_right = 1228.0
+margin_bottom = 49.0
+text = "Server Host"
+
+[node name="ServerHostInput" type="LineEdit" parent="NinePatchRect/MarginContainer/VBoxContainer"]
+margin_top = 53.0
+margin_right = 1228.0
+margin_bottom = 77.0
+text = "127.0.0.1"
+
+[node name="ServerPWLabel" type="Label" parent="NinePatchRect/MarginContainer/VBoxContainer"]
+margin_top = 81.0
+margin_right = 1228.0
+margin_bottom = 95.0
+text = "Password"
+
+[node name="ServerPWInput" type="LineEdit" parent="NinePatchRect/MarginContainer/VBoxContainer"]
+margin_top = 99.0
+margin_right = 1228.0
+margin_bottom = 123.0
+text = "123"
+
+[node name="StartButton" type="TextureButton" parent="NinePatchRect/MarginContainer/VBoxContainer"]
+margin_left = 504.0
+margin_top = 127.0
+margin_right = 724.0
+margin_bottom = 182.0
+rect_min_size = Vector2( 220, 55 )
+size_flags_horizontal = 4
+texture_normal = ExtResource( 3 )
+texture_pressed = ExtResource( 3 )
+texture_disabled = ExtResource( 3 )
+expand = true
+
+[node name="Start" type="Label" parent="NinePatchRect/MarginContainer/VBoxContainer/StartButton"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+custom_fonts/font = ExtResource( 1 )
+text = "Join"
+align = 1
+valign = 1
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="Template" type="Control" parent="."]
+visible = false
+margin_right = 40.0
+margin_bottom = 40.0
+
+[connection signal="pressed" from="NinePatchRect/MarginContainer/VBoxContainer/StartButton" to="." method="_on_StartButton_pressed"]

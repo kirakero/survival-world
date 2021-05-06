@@ -79,6 +79,7 @@ func send_chunks(pkey):
 			print(will_send.all_as_array())
 	
 	api.tx_objects({ 
+		Def.TX_TO: pkey,
 		Api.TX_TYPE: Api.TYPE_CHUNK,
 		Api.TX_INTENT: Api.INTENT_CLIENT,
 		Api.TX_DATA: get_chunks(will_send)
