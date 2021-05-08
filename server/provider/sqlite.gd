@@ -11,6 +11,7 @@ var connected_to = null
 
 var Config: ConfigData = null
 var Chunks: ChunkData = null
+var GameObs: GameObData = null
 	
 func _connect():
 	if connected_to != null:
@@ -124,6 +125,13 @@ func _chunk_get(position: Vector2):
 	if not _is_connected():
 		return {}
 	var res = Chunks.first(position)
+	
+	return res
+
+func _gameob_get(position: Vector2):
+	if not _is_connected():
+		return {}
+	var res = GameObs.all_from_chunk(position)
 	
 	return res
 

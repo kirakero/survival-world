@@ -4,7 +4,7 @@ class_name Api
 
 const TYPE_PLAYER = 0		# this is a Player
 const TYPE_RESOURCE = 1 	# this is a body in the environment that might move
-const TYPE_REMOVED = 2 		# this is a default body in the environment that was altered
+const TYPE_GHOST = 2 		# this is a default body in the environment that was altered
 const TYPE_CHUNK = 3 		# this is a map chunk
 const TYPE_TERRAIN = 4 		# this is a single map height
 
@@ -308,6 +308,9 @@ var objects = [
 	{}, # CHUNK    - saves to disk
 	{}, # TERRAIN  - saves to disk
 ]
+# loaded ChunkBasic
+var chunks = []
+
 var dirty_objects = [ [],[],[],[],[], ]
 var dirty_objects_client = [ [],[],[],[],[], ]
 var dirty_physics = []

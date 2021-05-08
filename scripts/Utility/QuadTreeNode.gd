@@ -3,18 +3,19 @@ class_name QuadTree
 
 var child = []
 var size
-var value
+var value: int
 var x
 var y
 var half
 var NODE = load("res://scripts/Utility/QuadTreeNode.gd")
 var ref = null
 var disable_optimization
+var showops = false
 
-const OP_ADD = true
-const OP_SUBTRACT = false
+const OP_ADD = 1
+const OP_SUBTRACT = 0
 
-func _init(_x, _y, _size, _value = false, _disable_optimization = false):
+func _init(_x, _y, _size, _value = OP_SUBTRACT, _disable_optimization = false):
 	x = _x
 	y = _y
 	value = _value
@@ -23,20 +24,14 @@ func _init(_x, _y, _size, _value = false, _disable_optimization = false):
 	disable_optimization = _disable_optimization
 	assert (size > 0)
 
-func setval(_value, _ref= null):
-#	print([x, y, ', size', size, 'setval to', _value])
+func setval(a: int, b = null, comp = COMP_STRICT):
+	if b != null:
+		if b > a:
+			a = b
+		
 	child = []
-	value = _value
-	if value and ref != null:
-		ref = _ref
-
-func getval():
-	if child.size() == 4:
-		return 'mixed'
-	return value
+	value = a
 	
-func showval():
-	return '%s, %s, size %s == %s' % [x, y, size, getval()]
 
 func add_children(value = false):
 	child = [
@@ -55,9 +50,11 @@ func all_as_array():
 		out.append([i.x, i.y, i.size])
 	return out
 
-func query(_x, _y, _s):
-	# wholey contained and true -- immediately return
-	if value and _x <= x and _y <= y and _x + _s >= x + size and _y + _s >= y + size:
+func istrue(truth):
+	return value == truth
+
+func query(_x, _y, _s, truth = OP_ADD):
+	if istrue(truth) and _x <= x and _y <= y and _x + _s >= x + size and _y + _s >= y + size:
 		return [self]
 
 	var res = []
@@ -66,9 +63,8 @@ func query(_x, _y, _s):
 	
 	return res
 
-func contains(_x, _y, _s):
-	# wholey contained and true -- immediately return
-	if value and _x >= x and _y >= y and _x + _s <= x + size and _y + _s <= y + size:
+func contains(_x, _y, _s, truth = OP_ADD):
+	if istrue(truth) and _x >= x and _y >= y and _x + _s <= x + size and _y + _s <= y + size:
 		return [self]
 
 	var res = []
@@ -77,21 +73,22 @@ func contains(_x, _y, _s):
 	
 	return res
 
-func is_empty():
-	if value == true:
+func is_empty(truth = OP_ADD):
+	if istrue(truth):
 		return false
 	if child.size() == 4:
 		for quad in child:
-			if not quad.is_empty():
+			if not quad.is_empty(truth):
 				return false
 	
 	return true
 
-func operation(op, _x, _y, _s = 16 ):
-#	print('start op', [op, _x, _y, _s] )
+func operation( op: int, _x, _y, _s = 16 ):
+	if showops:
+		print('OP operation(%s, %s, %s, %s)' % [op, _x, _y, _s])
+
 	assert(_s > 1)
-	if value == op and child.size() != 4:
-#		print('end op already ==')
+	if istrue(op) and child.size() != 4:
 		return
 
 	if child == []:
@@ -145,36 +142,59 @@ func safeval():
 
 func copy():
 	var result = NODE.new(x, y, size, safeval(), ref)
-#	print('copy', [x, y, size, safeval(), child.size()])
-#	if x == 0 and y == 0 and size == 8:
-#		assert(value == false)
 	if child.size() == 4:
 		for quad in range(4):
 			result.child.append(child[quad].copy())
-			
-	
 	return result
 
 const INTERSECT_KEEP_A = 1
 const INTERSECT_KEEP_B = 2
 const INTERSECT_BOTH = 3
+const UNION = 4
+const COMP_STRICT = 1
+const COMP_NONZERO = 2
 
-static func intersect(treeA, treeB, mode = INTERSECT_BOTH, init = false):
+static func isequal(a, b, comp) -> bool:
+	if COMP_NONZERO == comp:
+		if a > 0 and b > 0:
+			return true
+		if a == 0 and b == 0:
+			return true
+		return false
+	return a == b
+
+static func isnotequal(a, b, comp) -> bool:
+	if COMP_NONZERO == comp:
+		if a > 0 and b == 0:
+			return true
+		if a == 0 and b > 0:
+			return true
+		return false
+	return a != b
+
+static func intersect(treeA, treeB, mode = INTERSECT_BOTH, comp = COMP_STRICT, init = false):
+	if treeA.showops and init == false:
+		var optype = 'intersect'
+		if mode == UNION:
+			optype = 'union'
+		print('OP %s(mode = %s)' % [optype, mode])
+	
 	assert(treeA.size == treeB.size)
 	var result = treeA.NODE.new(treeA.x, treeA.y, treeA.size, init)
 	
 	if treeA.child.size() == 0 and treeB.child.size() == 0:
-		if treeA.value != treeB.value:
+		if mode == UNION:
+			if isequal(treeA.value, treeB.value, comp):
+				result.setval(treeA.value, treeB.value, comp)
+					
+		elif isnotequal(treeA.value, treeB.value, comp):
 			if (mode & INTERSECT_BOTH) == INTERSECT_BOTH:
-				result.setval(treeA.value or treeB.value)
-				if treeA.ref != null:
-					result.ref = treeA.ref
-				elif treeB.ref != null:
-					result.ref = treeB.ref
+				result.setval(treeA.value, treeB.value, comp)
 			elif (mode & INTERSECT_KEEP_A) == INTERSECT_KEEP_A:
-				result.setval(treeA.value, treeA.ref)
+				result.setval(treeA.value)
 			elif (mode & INTERSECT_KEEP_B) == INTERSECT_KEEP_B:
-				result.setval(treeB.value, treeB.ref)
+				result.setval(treeB.value)
+		
 	else:
 		var treeA_child = treeA.child
 		var treeB_child = treeB.child
@@ -189,7 +209,7 @@ static func intersect(treeA, treeB, mode = INTERSECT_BOTH, init = false):
 			treeB_child = treeB_child.child
 		
 		for quad in range(4):
-			result.child.append( intersect(treeA_child[quad], treeB_child[quad], mode) )
+			result.child.append( intersect(treeA_child[quad], treeB_child[quad], mode, comp) )
 		
 #		if not disable_optimization:
 #			# node cleanup - necessary?
@@ -209,43 +229,23 @@ static func intersect(treeA, treeB, mode = INTERSECT_BOTH, init = false):
 	
 
 static func union(treeA, treeB, mode = INTERSECT_BOTH, init = false):
-	assert(treeA.size == treeB.size)
-	var result = treeA.NODE.new(treeA.x, treeA.y, treeA.size, init)
-	
-	if treeA.child.size() == 0 and treeB.child.size() == 0:
-		if treeA.value == treeB.value:
-			if (mode & INTERSECT_BOTH) == INTERSECT_BOTH:
-				result.setval(treeA.value or treeB.value)
-				if treeA.ref != null:
-					result.ref = treeA.ref
-				elif treeB.ref != null:
-					result.ref = treeB.ref
-			elif (mode & INTERSECT_KEEP_A) == INTERSECT_KEEP_A:
-				result.setval(treeA.value, treeA.ref)
-			elif (mode & INTERSECT_KEEP_B) == INTERSECT_KEEP_B:
-				result.setval(treeB.value, treeB.ref)
-	else:
-		var treeA_child = treeA.child
-		var treeB_child = treeB.child
-		
-		if treeA.child.size() == 0 and treeB.child.size() == 4:
-			treeA_child = treeA.copy()
-			treeA_child.add_children(treeA.value)
-			treeA_child = treeA_child.child
-		elif treeA.child.size() == 4 and treeB.child.size() == 0:
-			treeB_child = treeB.copy()
-			treeB_child.add_children(treeB.value)
-			treeB_child = treeB_child.child
-		
-		for quad in range(4):
-			result.child.append( union(treeA_child[quad], treeB_child[quad], mode) )
-			
-	return result
+	return intersect(treeA, treeB, UNION)
 
-func debug(depth = 0):
-	print('#'.repeat(depth), ' ', showval())
+
+
+### DEBUG
+func getval():
+	if child.size() == 4:
+		return 'mixed'
+	return value
+	
+func showval():
+	return '%s, %s, size %s == %s' % [x, y, size, getval()]
+	
+func debug(label = '', depth = 0):
+	print(label, '#'.repeat(depth), ' ', showval())
 	if str(getval()) == 'mixed':
 		for c in child:
-			c.debug(depth+1)
+			c.debug(label, depth+1)
 
 		

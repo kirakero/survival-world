@@ -1,31 +1,32 @@
 extends Node2D
-
+const INTERSECT_KEEP_A = 1
+const INTERSECT_KEEP_B = 2
+const INTERSECT_BOTH = 3
+const UNION = 4
+const COMP_STRICT = 1
+const COMP_NONZERO = 2
 
 func _init():
 	
-	print('-----------')
-	var time_start = OS.get_ticks_msec()
-	var testquad = load("res://scripts/Utility/QuadTreeNode.gd").new(-8, -8, 16, false)
-	testquad.operation(testquad.OP_ADD, -8, -8, 8)
-	var elapsed_time = OS.get_ticks_msec() - time_start
-#	print ('took ', elapsed_time)
-	testquad.debug()
+	
+	var testquad = QuadTree.new(-8, -8, 16, false)
+	testquad.showops = true
+	
+	testquad.operation(123, -8, -8, 8)
+	testquad.debug('testquad1')
 
-#	print('-----------')
-#	var time_start2 = OS.get_ticks_msec()
-#	var testquad2 = load("res://scripts/Utility/QuadTreeNode.gd").new(-8, -8, 16, false)
-#	testquad2.operation(testquad2.OP_ADD, 4, 4, 4)
-#	testquad2.operation(testquad2.OP_ADD, 0, 4, 4)
-#	var elapsed_time2 = OS.get_ticks_msec() - time_start2
-##	print ('took ', elapsed_time2)
-#	testquad2.debug()
-	print('-----------')
-	print('subtract 0,12 size 2')
-	testquad.operation(testquad.OP_SUBTRACT, -8, -6, 2)
+	testquad.operation(145, -8, -6, 2)
+	testquad.debug('testquad1')
 
-	print('add 5,2 size 2')
-	testquad.operation(testquad.OP_ADD, 5, 2, 2)
-	testquad.debug()
+
+	var testquad2 = QuadTree.new(-8, -8, 16, false)
+	testquad2.showops = true
+	testquad2.operation(145, -8, -4, 2)
+	testquad2.debug('testquad2')
+
+	var testquad3 = testquad.intersect(testquad, testquad2, INTERSECT_KEEP_A, COMP_NONZERO)
+	testquad3.showops = true
+	testquad3.debug('testquad3')
 ##
 ##
 ##	print('add 0,12 size 2')

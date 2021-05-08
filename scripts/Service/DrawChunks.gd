@@ -217,13 +217,16 @@ func render_chunk(_data):
 	var uncompressed = data[Def.TX_CHUNK_DATA]
 	if uncompressed.size() > 0:
 		uncompressed = data[Def.TX_CHUNK_DATA].decompress(pow(chunk_size + 2, 2) * 4)
-	var mesh_chunk = MeshChunk.new(noise, uncompressed, data[Def.TX_PHYS_POSITION].x / chunk_size, data[Def.TX_PHYS_POSITION].z / chunk_size, chunk_size)
-	var key = Fun.make_chunk_key(data[Def.TX_PHYS_POSITION].x, data[Def.TX_PHYS_POSITION].z)
+	
+	var chunk = Chunk.new(Vector2(data[Def.TX_PHYS_POSITION].x, data[Def.TX_PHYS_POSITION].z), uncompressed, PoolByteArray(), chunk_size)
+	var mesh_chunk = chunk.get_ChunkMesh()
+	var key = chunk.get_key()
 	mesh_chunk.name = 'Chunk %s' % key
 	mesh_chunk.translation = data[Def.TX_PHYS_POSITION]
+	
 	call_deferred('render_done', key, thread, mesh_chunk)
 
-func render_done(key, thread, mesh_chunk: MeshChunk):
+func render_done(key, thread, mesh_chunk):
 	thread.wait_to_finish()
 	loaded_ref[key] = mesh_chunk
 	loaded_chunks.operation(QuadTree.OP_ADD, mesh_chunk.translation.x + world_half, mesh_chunk.translation.z + world_half, chunk_size)
