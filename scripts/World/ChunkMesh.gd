@@ -22,15 +22,6 @@ func _ready():
 	generate_water()
 	generate_chunk()
 
-static func bytes2height(pixel_high, pixel_low):
-	return ((((pixel_high & 0xff) << 8) | (pixel_low & 0xff))  - 65534/2) * 0.25
-
-static func height2bytes(height):
-	height = int(height * 4.0) + 65534/2
-	var high = ((height >> 8) & 0xff)
-	var low = height & 0xff
-	return [high, low]
-
 func generate_chunk():
 	var mesh: ArrayMesh = ArrayMesh.new()
 	var arr = []

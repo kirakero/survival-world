@@ -1,9 +1,12 @@
 extends Node
 
-var api: Api
+var api
 var provider
 var current_scene = null
 var config: Dictionary
+
+var DATA
+var NET 
 
 signal scene_loaded
 signal scene_prepared
@@ -13,6 +16,9 @@ func _init():
 	provider = SQLiteProvider.new()
 	api = Api.new(provider)
 	add_child(api)	
+	DATA = DataLayer.new()	
+	NET = Network.new()
+	add_child(network)
 
 func _ready():
 	var root = get_tree().get_root()

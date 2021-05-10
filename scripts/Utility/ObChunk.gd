@@ -5,14 +5,10 @@ var chunk: Chunk
 var chunk_key
 var my_objects: = []
 var ghosts: = {}
-var registry setget set_registry
 
 func _init(_chunk):
 	chunk = _chunk
 	chunk_key = chunk.get_key()
-
-func set_registry(value):
-	registry = value
 
 # load the 'default' objects from the chunk raw data
 func load_all():
@@ -47,24 +43,30 @@ func add(gameob: Dictionary):
 	gameob[ Def.TX_UPDATED_AT ] = ServerTime.now()
 	gameob[ Def.QUAD ] = chunk_key
 	gameob[ Def.QUAD_INDEX ] = local_index
-	registry.objects[ gameob[Def.TX_ID] ] = gameob
-	my_objects.append( registry.objects[ gameob[Def.TX_ID] ] )
+	Global.DATA.objects[ gameob[Def.TX_ID] ] = gameob
+	my_objects.append( Global.DATA.objects[ gameob[Def.TX_ID] ] )
+	
+func update(gameob: Reference, is_entering):
+	if not is_entering:
+		var cur_index = gameob[ Def.QUAD_INDEX ]
+		my_objects.remove(gameob[ Def.QUAD_INDEX ])
+	var local_index = my_objects.size()
+	gameob[ Def.QUAD_INDEX ] = local_index
+	my_objects.append( gameob )
 	
 # game object has entered the zone
-# this happens before the object is actually updated
 # call the ghostbusters
-func enter(gameob: Dictionary):
-	if ghosts.has( gameob[ Def.TX_ID ] ):
-		my_objects[ ghosts[ gameob[ Def.TX_ID ] ]] = null
-		ghosts.erase( gameob[ Def.TX_ID ] )
+func enter(id):
+	if ghosts.has( id ):
+		my_objects[ ghosts[ id ]] = null
+		ghosts.erase( id )
 
 # game object has left the zone
-# this happens before the object is actually updated
 # add a ghost
-func exit(gameob: Dictionary):
-	ghosts[ gameob[ Def.TX_ID ] ] = my_objects.size()
+func exit( id ):
+	ghosts[ id ] = my_objects.size()
 	my_objects.append({
-		Def.TX_ID: gameob[ Def.TX_ID ],
+		Def.TX_ID: id,
 		Def.TX_TYPE: Def.TYPE_GHOST,
 		Def.TX_POSITION: chunk.world_position, 
 		Def.TX_UPDATED_AT: ServerTime.now(),
@@ -87,7 +89,7 @@ func serialize(until = 0):
 			# its a local friendly ghost
 			gameob = cur_key
 		else:
-			gameob = registry.objects[ cur_key ].duplicate()
+			gameob = Global.DATA.objects[ cur_key ].duplicate()
 		# we've hit the point where objects no longer need to be synced
 		if gameob[ Def.TX_UPDATED_AT ] < until:
 			break
