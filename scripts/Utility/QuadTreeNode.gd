@@ -11,6 +11,8 @@ var NODE = load("res://scripts/Utility/QuadTreeNode.gd")
 var ref = null
 var disable_optimization
 var showops = false
+var position: Vector2
+var key: String
 
 const OP_ADD = 1
 const OP_SUBTRACT = 0
@@ -18,6 +20,8 @@ const OP_SUBTRACT = 0
 func _init(_x, _y, _size, _value = OP_SUBTRACT, _disable_optimization = false):
 	x = _x
 	y = _y
+	position = Vector2(x, y)
+	key = '%s,%s' % [x, y]
 	value = _value
 	size = _size
 	half = size * 0.5

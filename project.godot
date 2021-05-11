@@ -44,6 +44,11 @@ _global_script_classes=[ {
 "language": "GDScript",
 "path": "res://zOld/ChunkGen.gd"
 }, {
+"base": "Node",
+"class": "Client",
+"language": "GDScript",
+"path": "res://scripts/Client.gd"
+}, {
 "base": "Model",
 "class": "ConfigData",
 "language": "GDScript",
@@ -57,7 +62,7 @@ _global_script_classes=[ {
 "base": "Reference",
 "class": "DataLayer",
 "language": "GDScript",
-"path": "res://scripts/Utility/DataLayer.gd"
+"path": "res://scripts/DataLayer.gd"
 }, {
 "base": "Node",
 "class": "Def",
@@ -179,6 +184,11 @@ _global_script_classes=[ {
 "language": "GDScript",
 "path": "res://zOld/Save.gd"
 }, {
+"base": "Node",
+"class": "Server",
+"language": "GDScript",
+"path": "res://scripts/Server.gd"
+}, {
 "base": "Reference",
 "class": "ServerTime",
 "language": "GDScript",
@@ -202,6 +212,7 @@ _global_script_class_icons={
 "Chunk1": "",
 "ChunkData": "",
 "ChunkGen": "",
+"Client": "",
 "ConfigData": "",
 "Coordinator": "",
 "DataLayer": "",
@@ -229,6 +240,7 @@ _global_script_class_icons={
 "RiverV2": "",
 "SQLiteProvider": "",
 "Save": "",
+"Server": "",
 "ServerTime": "",
 "Uuid": "",
 "Vector2Edge": ""

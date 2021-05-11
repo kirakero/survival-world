@@ -31,4 +31,5 @@ func all() -> Dictionary:
 	for item in db.select_rows(TABLE, "", ["*"]):
 		out[item['name']] = item['value']
 	
+	out['max_range_chunk'] = 192
 	return out

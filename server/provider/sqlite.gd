@@ -42,7 +42,10 @@ func _is_connected():
 
 func _res(data, res, code = 200):
 	# transmit the res to the api
-	res['_key'] = data['_key']
+	if not data.has('_callback'):
+		print ('ERROR: %s' % res)
+		return
+	res['_key'] = data['_key'] if data.has('_key') else null
 	res['_callback'] = data['_callback']
 	data['_sender'].call_deferred('done', data['_callback'], res, code)
 
@@ -113,6 +116,13 @@ func world_get(data: Dictionary):
 		return _error(data, 'Not connected')
 	var res = Config.all()
 	return _okay(data, res)
+
+# get a world ie. load its settings
+func _world_get():
+	if not _is_connected():
+		return _error({}, 'Not connected')
+	var res = Config.all()
+	return res
 
 # get a chunk from the map at position as Vector2	
 func chunk_get(data: Dictionary):

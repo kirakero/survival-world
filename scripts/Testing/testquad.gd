@@ -8,7 +8,6 @@ const COMP_NONZERO = 2
 
 func _init():
 	
-	
 	var testquad = QuadTree.new(-8, -8, 16, false)
 	testquad.showops = true
 	

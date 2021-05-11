@@ -5,7 +5,7 @@ var selected = null
 func _on_LoadGame_tree_entered():
 	# load games
 	
-	var games = Global.api.sync_my_world_index()
+	var games = Global.DATA.sync_my_world_index()
 	var target = $NinePatchRect/MarginContainer/VBoxContainer/LocalGamesList
 	for game in games:
 		var button = $NinePatchRect/MarginContainer/VBoxContainer/LocalGamesList/GameOptionButton.duplicate()

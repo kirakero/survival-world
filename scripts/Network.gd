@@ -46,6 +46,27 @@ func rpc_invoke_reliable(id, method, data):
 		print('rpc_id', id, method, data)
 		rpc_id(id, method, data)
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 ######### OBJECT DATA #########################################################
 
 puppet func rx_config(_data: Dictionary):

@@ -4,24 +4,25 @@ extends Reference
 var max_range
 var api
 
-func _init(_api: Api, _max_range = 192):
-	max_range = _max_range
-	api = _api
-
+func _init():
+#	max_range = _max_range
+#	api = _api
+	pass
+	
 func run():
 	# update and retransmit new player locations
 #	print ('PLAYERS ', api.objects[ Api.TYPE_PLAYER ].keys())
-	for pkey in api.objects[ Api.TYPE_PLAYER ].keys():
-		var player = api.objects[ Api.TYPE_PLAYER ][ pkey ]
-		var pkey_int = int(pkey)
-		
-#		print(' DIRTY ', api.dirty_physics.size())
-		## broadcast player data
-		for dirty in api.dirty_physics:
-
-			pass
-		
-		api.dirty_physics = []
+#	for pkey in api.objects[ Api.TYPE_PLAYER ].keys():
+#		var player = api.objects[ Api.TYPE_PLAYER ][ pkey ]
+#		var pkey_int = int(pkey)
+#
+##		print(' DIRTY ', api.dirty_physics.size())
+#		## broadcast player data
+#		for dirty in api.dirty_physics:
+#
+#			pass
+#
+#		api.dirty_physics = []
 #			# do not transmit back to original sender
 #			# nor to server or local client -- that's us!
 #			if dirty[ Api.DIRTY_SENDER ] == pkey_int or dirty[ Api.DIRTY_SENDER ] == 1 or dirty[ Api.DIRTY_SENDER ] == 0:
@@ -35,4 +36,4 @@ func run():
 #			api.rpc_unreliable_id(pkey_int, 'rx_physics', obj)
 
 	
-	
+	pass

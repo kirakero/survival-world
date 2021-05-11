@@ -5,8 +5,10 @@ var provider
 var current_scene = null
 var config: Dictionary
 
-var DATA
-var NET 
+var DATA= null
+var NET = null
+var CLI = null
+var SRV = null
 
 signal scene_loaded
 signal scene_prepared
@@ -16,31 +18,35 @@ func _init():
 	provider = SQLiteProvider.new()
 	api = Api.new(provider)
 	add_child(api)	
+	
 	DATA = DataLayer.new()	
 	NET = Network.new()
-	add_child(network)
-
-func _ready():
-	var root = get_tree().get_root()
-	current_scene = root.get_child(root.get_child_count() - 1)
+	add_child(NET)
 
 func start_local( game, server, password ):
 	goto_scene("res://scenes/LoadScene.tscn")
 	yield(self, "scene_loaded")
 	
-	api.start_server( game, server, password, 2480 )
-	yield(api, "server_loaded")
+	SRV = Server.new( game, server, password )
+	call_deferred("add_child", SRV )
+	yield(SRV, "server_loaded")
 	
-	api.start_client()
-	yield(api, "client_loaded")
+	CLI = Client.new( 'kero' )
+	add_child( CLI )
+	yield(CLI, "client_loaded")
 
 func start_remote( server, password ):
 	goto_scene("res://scenes/LoadScene.tscn")
 	yield(self, "scene_loaded")
 	
-	api.start_client( server, password )
+	CLI = Client.new( 'kero' )
+	call_deferred("add_child", CLI )
 	yield(api, "client_loaded")
 
+
+func _ready():
+	var root = get_tree().get_root()
+	current_scene = root.get_child(root.get_child_count() - 1)
 
 func create_world(settings: Dictionary):
 	print('create world', settings)
@@ -107,11 +113,6 @@ func create_world(settings: Dictionary):
 	## store the map
 	pass
 	
-	
-
-
-
-
 func goto_scene(path):
 	call_deferred("_deferred_goto_scene", path)
 
@@ -143,7 +144,6 @@ func _deferred_goto_scene_commit(scene):
 	
 	emit_signal("scene_loaded")
 	
-
 func _deferred_goto_scene(path):
 
 
