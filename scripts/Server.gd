@@ -53,6 +53,8 @@ func _player_connected(id):
 		# this method should not be called on a local client/server, only
 		# remote clients
 		rpc_id(id, "rx_config", Global.config)
+	
+	
 
 
 

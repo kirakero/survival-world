@@ -46,11 +46,11 @@ func add_children(value = false):
 	]
 
 func all():
-	return query(0, 0, size)
+	return query(x, y, size)
 
 func all_as_array():
 	var out = []
-	for i in query(0, 0, size):
+	for i in query(x, y, size):
 		out.append([i.x, i.y, i.size])
 	return out
 

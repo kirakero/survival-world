@@ -14,7 +14,7 @@ var dirty_objects = []
 var dirty_chunks = []
 var dirty_players = []
 
-var pending_gameob: = []
+var last_transmitted = {}
 
 var qt_dirty_obchunks: QuadTree
 var tick: int = 0
@@ -39,8 +39,11 @@ func add_mode(_mode):
 
 func set_config(value):
 	config = value
+	config['world_size'] = float(config['world_size'])
+	config['chunk_size'] = float(config['chunk_size'])
 	qt_dirty_obchunks = QuadTree.new(config['world_size'] * -0.5, config['world_size'] * -0.5, config['world_size'])
 	qt_loaded_chunks = QuadTree.new(config['world_size'] * -0.5, config['world_size'] * -0.5, config['world_size'])
+	_debug('config loaded')
 	
 # receive new objects
 func receive(raw: Array, from: int):
@@ -55,13 +58,10 @@ func receive_partial(raw: Array, from: int):
 		ingest_partial( item, from )
 
 func ingest_new(data: Dictionary, from):
-	# the server is not allowed to received chunks, so we know that the
-	# client side chunks are dirty
-	var id = data[ Def.ID ]
-	if data[ Def.TX_TYPE ] == Def.TYPE_CHUNK:
-		chunks_client[ id ] = data
-		dirty_chunks.append( id )
+	# if this is from ourselves, do nothing
+	if from == 0:
 		return
+	var id = data[ Def.TX_ID ]
 	data[ Def.TX_ID ] = id
 	# the system expects this to be a brand new object...
 	add( data )
@@ -69,16 +69,17 @@ func ingest_new(data: Dictionary, from):
 	dirty_objects.append([ id, from ])
 
 func ingest_partial(data: Dictionary, from):
+	_debug('ingest-p %s' % to_json(data))
 	# the server is not allowed to received chunks, so we know that the
 	# client side chunks are dirty
 	# todo - since this is an update operation, we'd have to sort out the chunk
 	# that might already be loaded...
-	var id = data[ Def.ID ]
-	if data[ Def.TX_TYPE ] == Def.TYPE_CHUNK:
+	var id = data[ Def.TX_ID ]
+	if data.has( Def.TX_TYPE ) and data[ Def.TX_TYPE ] == Def.TYPE_CHUNK:
 		chunks_client[ id ] = data
 		dirty_chunks.append( id )
 		return
-	data[ Def.TX_ID ] = id
+		
 	# the system expects this to be an updated object...
 	update( data )
 	# dirty objects
@@ -90,19 +91,26 @@ func ingest_partial(data: Dictionary, from):
 func add(gameob: Dictionary):
 	# validation
 	assert(gameob.has( Def.TX_ID ))
-	assert(not objects.has( gameob[ Def.TX_ID ] ))
+	if objects.has( gameob[ Def.TX_ID ] ):
+		_debug("Warning: Receiving object %s again" % gameob[ Def.TX_ID ])
 	assert(gameob.has( Def.TX_TYPE ))
 	assert(gameob.has( Def.TX_POSITION ))
 	
 	# determine the chunk key
-	var pos_x: int = floor(gameob[ Def.TX_POSITION ].x / config['world_size']) * config['world_size']
-	var pos_z: int = floor(gameob[ Def.TX_POSITION ].z / config['world_size']) * config['world_size']
+	var pos_x: int = floor(gameob[ Def.TX_POSITION ].x / config['chunk_size']) * config['chunk_size']
+	var pos_z: int = floor(gameob[ Def.TX_POSITION ].z / config['chunk_size']) * config['chunk_size']
 	var key = Fun.make_chunk_key(pos_x, pos_z)
 	if not chunks.has( key ):
-		# try again later
-		pending_gameob.append( gameob )
-		return
+		_debug('loading missing chunk %s' % key )
+		# force load the chunk
+		var needed = QuadTree.new(pos_x, pos_z, config['chunk_size'], 1)
+		qt_load_chunks( needed )
 	
+	# if the object type is a player, begin tracking what has been sent to them
+	if gameob[ Def.TX_TYPE ] == Def.TYPE_PLAYER:
+		last_transmitted[ gameob[ Def.TX_ID ] ] = qt_empty()
+	gameob[ Def.TX_CREATED_AT ] = ServerTime.now()
+	gameob[ Def.TX_UPDATED_AT ] = ServerTime.now()
 	# finally, add it to the chunk and mark the obchunk as dirty
 	obchunks[ key ].add( gameob )
 	qt_dirty_obchunks.operation(tick, pos_x, pos_z, config['world_size'])
@@ -114,11 +122,14 @@ func add_player(gameob: Dictionary):
 	assert(gameob.has( Def.TX_POSITION ))
 	
 	gameob[ Def.TX_UPDATED_AT ] = ServerTime.now()
-	gameob[ Def.TYPE ] = Def.TYPE_PLAYER
+	gameob[ Def.TX_TYPE ] = Def.TYPE_PLAYER
 	gameob[ Def.QUAD ] = null
 	
 	objects[ gameob[Def.TX_ID] ] = gameob
 	players[ gameob[Def.TX_ID] ] = gameob
+	# todo remove this function...
+	# also this setup shouldnt be here...
+	last_transmitted[ gameob[ Def.TX_ID ] ] = qt_empty()
 	dirty_players.append( gameob )
 	
 
@@ -127,19 +138,24 @@ func update(gameob: Dictionary):
 	assert(gameob.has( Def.TX_ID ))
 	assert(gameob.has( Def.TX_POSITION ))
 	assert(gameob.has( Def.TX_UPDATED_AT ))
-		
+	assert( objects.has( gameob[Def.TX_ID] ) )
 	# data is partial but it will have an ID
 	# make sure we dont process old data, and make sure we can update something
 	if not objects.has( gameob[ Def.TX_ID ] ) || objects[ gameob[Def.TX_ID] ][ Def.TX_UPDATED_AT ] > gameob[ Def.TX_UPDATED_AT ]:
 		return false
 	
-	gameob.erase( Def.TX_ID )
 	gameob.erase( Def.TX_TYPE )
 	
-	var pos_x: int = floor(gameob[ Def.TX_POSITION ].x / config['world_size']) * config['world_size']
-	var pos_z: int = floor(gameob[ Def.TX_POSITION ].z / config['world_size']) * config['world_size']
-	var chunk_key = Fun.make_chunk_key(pos_x, pos_z)
+	var pos_x: int = floor(gameob[ Def.TX_POSITION ].x / config['chunk_size']) * config['chunk_size']
+	var pos_z: int = floor(gameob[ Def.TX_POSITION ].z / config['chunk_size']) * config['chunk_size']
 	
+	var chunk_key = Fun.make_chunk_key(pos_x, pos_z)
+	if not chunks.has( chunk_key ):
+		_debug('loading missing chunk %s' % chunk_key )
+		# force load the chunk
+		var needed = QuadTree.new(pos_x, pos_z, config['chunk_size'], 1)
+		qt_load_chunks( needed )
+		
 	# write the new values
 	for k in gameob.keys():
 		objects[ gameob[Def.TX_ID] ][ k ] = gameob[ k ]
@@ -147,13 +163,13 @@ func update(gameob: Dictionary):
 	# the object has moved into another chunk
 	if chunk_key != objects[ gameob[Def.TX_ID] ][ Def.QUAD ]:
 		# this is a special case for putting players into the chunks
-		if objects[ gameob[Def.TX_ID] ].has( Def.QUAD ):
+		if objects[ gameob[Def.TX_ID] ][ Def.QUAD ]:
 			chunks[ objects[ gameob[Def.TX_ID] ][ Def.QUAD ] ].exit( gameob[Def.TX_ID] )
 			chunks[ chunk_key ].enter( gameob[Def.TX_ID] )
 		objects[ gameob[Def.TX_ID] ][ Def.QUAD ] = chunk_key
-		chunks[ chunk_key ].update( objects[ gameob[Def.TX_ID] ], true )
+		obchunks[ chunk_key ].update( gameob, true )
 	else:
-		chunks[ chunk_key ].update( objects[ gameob[Def.TX_ID] ], false )
+		obchunks[ chunk_key ].update( gameob, false )
 	
 	qt_dirty_obchunks.operation(tick, pos_x, pos_z, config['world_size'])
 	
@@ -162,11 +178,13 @@ func update(gameob: Dictionary):
 
 
 
+func qt_empty():
+	return QuadTree.new(-config['world_size']*0.5, -config['world_size']*0.5, config['world_size'])
 
 
 func qt_load_chunks(chunk: QuadTree):
 	if chunk.size == config['chunk_size']:
-		var res = Global.api.world_provider._chunk_get( chunk.position )
+		var res = world_provider._chunk_get( chunk.position )
 		# register the basic object -- this is the object that can be transmitted
 		# to connected peers
 		objects[ chunk.key ] = res
@@ -176,6 +194,10 @@ func qt_load_chunks(chunk: QuadTree):
 		if uncompressed.size() > 0:
 			uncompressed = res[Def.TX_CHUNK_DATA].decompress(pow(chunk.size + 2, 2) * 4)
 		add_chunk( Chunk.new( chunk.position, uncompressed, res[Def.TX_OBJECT_DATA], chunk.size ) )
+		# the raw object needs to be a child of its own obchunk so it can be
+		# synced to other clients
+		obchunks[ chunk.key ].update( res, false )
+		_debug('loading %s' % chunk.key )
 		return
 	
 	chunk.add_children()
@@ -193,7 +215,7 @@ func qt_get_chunks(tree: QuadTree) -> Array:
 	var chunks = []
 	for chunk in union:
 		chunks.append( chunk.key )
-	
+
 	return chunks
 
 # when the server loads a chunk
@@ -241,7 +263,7 @@ func set_world(_game):
 	world_provider = SQLiteProvider.new()
 	game = _game
 	world_provider.conn_post({'game': _game})
-	config = world_provider._world_get()	
+	set_config( world_provider._world_get() )	
 
 # standardize the request object
 func invoke(endpoint: String, data: Dictionary):
@@ -317,3 +339,6 @@ func async_multichunk_get(_data: Array):
 		'data': _data,
 	})
 
+
+func _debug(message):
+	print ("DATA: %s" % message)

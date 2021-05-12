@@ -10,6 +10,8 @@ var host
 var password
 var port
 
+var dirty_chunks: = []
+
 signal client_loaded
 signal chunk_queue_empty
 
@@ -32,7 +34,8 @@ func _startup():
 		Global.NET.my_id = get_tree().get_network_unique_id()
 		_debug('initiated connection, my id is %s ' % Global.NET.my_id)
 		get_tree().connect("network_peer_connected", self, "_player_connected")
-	
+	else:
+		_player_connected(1)
 
 var seen_players = []
 func _player_connected(id):
@@ -50,6 +53,7 @@ func load_scene():
 		Def.TX_ID: Global.NET.my_id,
 		Def.TX_NAME: name,
 		Def.TX_POSITION: Vector3(-440, 1, 128),
+		Def.TX_FOCUS: Global.NET.my_id,
 	}
 	Global.DATA.add_player(my_data)
 	Global.NET.tx( Global.NET.my_id )
@@ -74,6 +78,11 @@ func load_scene():
 	yield(self, "chunk_queue_empty")
 	player.physics_active = true
 
+
+func get_and_forget_dirty_chunks():
+	var dirty_chunks_ = dirty_chunks.duplicate()
+	dirty_chunks = []
+	return dirty_chunks_
 
 
 func _physics_process(delta):

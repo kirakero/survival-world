@@ -19,8 +19,9 @@ const TX_TIME = 't'
 const TX_ERASE = 'E' # erase mode
 const TX_INTENT = 'i'
 const TX_NAME = 'N'
-
-const TX_UPDATED_AT = 'U' # database save time
+const TX_FOCUS = 'F'
+const TX_UPDATED_AT = 'U' # updated at
+const TX_CREATED_AT = 'A' # created at
 const TX_CHUNK_DATA = 'C' # compressed chunk data
 const TX_OBJECT_DATA = 'r' # uncompressed chunk default objects
 

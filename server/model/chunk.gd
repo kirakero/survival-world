@@ -69,14 +69,22 @@ func first(position: Vector2):
 	var res = db.select_rows(TABLE, query, ["*"])
 	if res.size():
 		return {
-			TX_PHYS_POSITION: Vector3(res[0]['pos_x'], 0, res[0]['pos_y']),
-			TX_UPDATED_AT: res[0]['updated_at'],
-			TX_CHUNK_DATA: res[0]['chunk']
+			Def.TX_ID: Fun.make_chunk_key(position.x, position.y),
+			Def.TX_TYPE: Def.TYPE_CHUNK,
+			Def.TX_POSITION: Vector3(res[0]['pos_x'], 0, res[0]['pos_y']),
+			Def.TX_UPDATED_AT: ServerTime.now(),
+			Def.TX_CREATED_AT: ServerTime.now(),
+			Def.TX_CHUNK_DATA: res[0]['chunk'],
+			Def.TX_OBJECT_DATA: PoolByteArray(),
 		}
 	return {
-		TX_PHYS_POSITION: Vector3(position.x, 0, position.y),
-		TX_UPDATED_AT: 0,
-		TX_CHUNK_DATA: PoolByteArray()
+		Def.TX_ID: Fun.make_chunk_key(position.x, position.y),
+		Def.TX_TYPE: Def.TYPE_CHUNK,
+		Def.TX_POSITION: Vector3(position.x, 0, position.y),
+		Def.TX_UPDATED_AT: ServerTime.now(),
+		Def.TX_CREATED_AT: ServerTime.now(),
+		Def.TX_CHUNK_DATA: PoolByteArray(),
+		Def.TX_OBJECT_DATA: PoolByteArray(),
 	}
 
 func where(positions: Array) -> Array:

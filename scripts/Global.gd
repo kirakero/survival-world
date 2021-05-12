@@ -1,6 +1,5 @@
 extends Node
 
-var api
 var provider
 var current_scene = null
 var config: Dictionary
@@ -14,11 +13,7 @@ signal scene_loaded
 signal scene_prepared
 
 # api and provider basically always needs to be available
-func _init():
-	provider = SQLiteProvider.new()
-	api = Api.new(provider)
-	add_child(api)	
-	
+func _init():	
 	DATA = DataLayer.new()	
 	NET = Network.new()
 	add_child(NET)
@@ -41,7 +36,7 @@ func start_remote( server, password ):
 	
 	CLI = Client.new( 'kero' )
 	call_deferred("add_child", CLI )
-	yield(api, "client_loaded")
+	yield(CLI, "client_loaded")
 
 
 func _ready():
@@ -54,15 +49,15 @@ func create_world(settings: Dictionary):
 	
 	yield(self, "scene_loaded")
 	## create the map savefile
-	api.async_world_post(settings['newgame'], settings['seed'], settings['world_size'], settings['chunk_size'])
-	var _res = yield(api, "world_post_done")
+	DATA.async_world_post(settings['newgame'], settings['seed'], settings['world_size'], settings['chunk_size'])
+	var _res = yield(DATA, "world_post_done")
 	print (_res)
 	
 	if _res['status'] != 200:
 		return goto_scene("res://scenes/HomeScene.tscn")
 		
 	### connect to new savefile
-	api.game = settings['newgame']
+	DATA.game = settings['newgame']
 	
 	### map generation
 	print('gen')
@@ -103,8 +98,8 @@ func create_world(settings: Dictionary):
 #					dynImage.save_png('res://_test/i_%s_%s-%s.png' % [k, x, y])
 				chunks.append({'position': _position, 'chunk': _data.compress()})
 				
-		api.async_multichunk_post(chunks)
-		var api_res = yield(api, "multichunk_post_done")
+		DATA.async_multichunk_post(chunks)
+		var api_res = yield(DATA, "multichunk_post_done")
 		print (api_res)
 		if api_res['status'] == 400:
 			assert(false)

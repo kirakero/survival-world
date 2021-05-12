@@ -34,24 +34,29 @@ func load_all():
 		})
 		
 	# load the stored objects from the database
-	for object in Api.provider._gameob_get(chunk.position):
-		add(object)
+#	for object in Api.provider._gameob_get(chunk.position):
+#		add(object)
 		
 
 func add(gameob: Dictionary):
 	var local_index = my_objects.size()
 	gameob[ Def.TX_UPDATED_AT ] = ServerTime.now()
+	gameob[ Def.TX_CREATED_AT ] = ServerTime.now()
 	gameob[ Def.QUAD ] = chunk_key
 	gameob[ Def.QUAD_INDEX ] = local_index
 	Global.DATA.objects[ gameob[Def.TX_ID] ] = gameob
 	my_objects.append( Global.DATA.objects[ gameob[Def.TX_ID] ] )
 	
-func update(gameob: Reference, is_entering):
-	if not is_entering:
+func update(gameob: Dictionary, is_entering):
+	for k in gameob.keys():
+		Global.DATA.objects[ gameob[ Def.TX_ID ] ][ k ] = gameob[ k ]
+	gameob = Global.DATA.objects[ gameob[ Def.TX_ID ] ]
+	if not is_entering and gameob.has( Def.QUAD_INDEX ):
 		var cur_index = gameob[ Def.QUAD_INDEX ]
 		my_objects.remove(gameob[ Def.QUAD_INDEX ])
 	var local_index = my_objects.size()
 	gameob[ Def.QUAD_INDEX ] = local_index
+	gameob[ Def.TX_UPDATED_AT ] = ServerTime.now()
 	my_objects.append( gameob )
 	
 # game object has entered the zone
@@ -75,7 +80,7 @@ func exit( id ):
 
 
 # returns the objects ready to be send to client
-func serialize(until = 0):
+func serialize(until = 0, exclude = ''):
 	var i = my_objects.size()
 	var out
 	while (i > 0):
@@ -90,13 +95,54 @@ func serialize(until = 0):
 			gameob = cur_key
 		else:
 			gameob = Global.DATA.objects[ cur_key ].duplicate()
+		# exclude allows the most efficient filtering of objects that should
+		# not be sent to the user transmitting their physics to the server
+		if gameob[ Def.TX_FOCUS ] == exclude:
+			continue
 		# we've hit the point where objects no longer need to be synced
 		if gameob[ Def.TX_UPDATED_AT ] < until:
 			break
 		gameob.erase( Def.QUAD )
 		gameob.erase( Def.QUAD_INDEX )
 		out.append( gameob )
-		
+
+# returns the objects ready to be send to client
+func bifurcated_delta(since, exclude):
+	var i = my_objects.size()
+	var txr = []
+	var txp = []
+	while (i > 0):
+		i = i - 1
+		var cur_key = my_objects[i]
+		# the key was nullified (due to an object change)
+		if cur_key == null:
+			continue
+		var gameob: Dictionary
+		if typeof(cur_key) == TYPE_DICTIONARY:
+			# its a local friendly ghost
+			gameob = cur_key
+		else:
+			gameob = Global.DATA.objects[ cur_key ].duplicate()
+		# exclude allows the most efficient filtering of objects that should
+		# not be sent to the user transmitting their physics to the server
+		if gameob.has( Def.TX_FOCUS ) and gameob[ Def.TX_FOCUS ] == exclude:
+			continue
+		# we've hit the point where objects no longer need to be synced
+		if gameob[ Def.TX_UPDATED_AT ] < since:
+			break
+
+		gameob.erase( Def.QUAD )
+		gameob.erase( Def.QUAD_INDEX )
+		if gameob[ Def.TX_CREATED_AT ] >= since:
+			# this object was created after our most recent query
+			# it needs to be sent with reliable
+			txr.append( gameob )
+		else:
+			# this is a physics update so we can send unreliable
+			txp.append( gameob )
+	
+	print ('bifur since ', since ,': ' , { 'txr': txr, 'txp': txp } )
+	return { 'txr': txr, 'txp': txp }
 		
 static func random_from_vector2(st: Vector2, mult = 1.0):
 	var a = sin(st.dot(Vector2(12.9898,78.233)))*43758.5453123

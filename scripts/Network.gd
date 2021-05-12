@@ -5,20 +5,37 @@ var my_id = 1
 
 	
 func tx(id, to = 1):
-	rpc_invoke(to, 'rxs', [Global.DATA.serialized_copy( id )])
+	rpc_invoke_reliable(to, 'rxs', [Global.DATA.serialized( id )])
 
+#TRANSMIT MANY ID
 func txs(ids, to = 1):
+	if ids.size() == 0:
+		return
 	var data = Array()
 	data.resize( ids.size() )
-	for i in range(ids):
+	for i in range(ids.size()):
 		data[ i ] =  Global.DATA.serialized( ids[i] ) 
-	rpc_invoke(to, 'rxs', data)
+	rpc_invoke_reliable(to, 'rxs', data)
 
+# TRANSMIT MANY RAW
+func txr(data, to = 1):
+	if data.size() == 0:
+		return
+	rpc_invoke_reliable(to, 'rxs', data)
+
+# TRANSMIT MANY PARTIAL
 func txs_partial(ids, to = 1):
 	var data = Array()
 	data.resize( ids.size() )
-	for i in range(ids):
+	for i in range(ids.size()):
 		data[ i ] =  Global.DATA.serialized_partial( ids[i] ) 
+	_debug("tx-p %s" % to_json(data))
+	rpc_invoke(to, 'rxs_partial', data)
+
+# TRANSMIT MANY PARTIAL RAW
+func txp(data, to = 1):
+	if data.size() == 0:
+		return
 	rpc_invoke(to, 'rxs_partial', data)
 
 func rxs(data: Array):
@@ -27,20 +44,21 @@ func rxs(data: Array):
 	
 func rxs_partial(data: Array):
 	var sender_id = get_tree().get_rpc_sender_id()
+	_debug("rx-p (from %s) %s" % [sender_id, to_json(data)] )
 	Global.DATA.receive_partial( data, sender_id )
 
 #####################################################3
 ### STATE INOUT
 func rpc_invoke(id, method, data):
 #	print('rpc_invoke', id, method)
-	if Global.DATA.is_server():
+	if Global.SRV:
 		call_deferred(method, data)
 	else:
 		rpc_unreliable_id(id, method, data)
 
 func rpc_invoke_reliable(id, method, data):
 #	print('rpc_invoke_reliable', id, method)
-	if Global.DATA.is_server():
+	if Global.SRV:
 		call_deferred(method, data)
 	else:
 		print('rpc_id', id, method, data)
@@ -116,3 +134,8 @@ puppet func rx_config(_data: Dictionary):
 #			obj[_key] = _data[Def.TX_DATA][_key]
 #
 #	dirty_physics.append([ sender_id, _data[TX_TYPE] , _data[TX_ID] ])
+
+
+
+func _debug(message):
+	print ("NET: %s" % message)
