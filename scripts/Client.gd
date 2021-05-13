@@ -12,6 +12,15 @@ var port
 
 var dirty_chunks: = []
 
+# OBJECT DATA
+var objects: = {}
+var chunks: = {}
+var obchunks: = {}
+
+# RECEIVED CHUNKS
+var received_chunks: QuadTree
+var received_chunks_dirty = false
+
 signal client_loaded
 signal chunk_queue_empty
 
@@ -37,6 +46,50 @@ func _startup():
 	else:
 		_player_connected(1)
 
+func get_obchunk(pos_x, pos_z):
+	# when the server loads a chunk
+	var key = Fun.make_chunk_key(pos_x, pos_z)
+	if chunks.has( key ):
+		return obchunks[ key ]
+		
+	chunks[ key ] = Chunk.new( Vector2(pos_x, pos_z) )
+	obchunks[ key ] = ObChunk.new( chunks[ key ], self )
+	
+	return obchunks[ key ]
+
+func add_gameob(gameob: Dictionary, from, pos_x, pos_z):
+	_debug("received %s" % gameob[ Def.TX_ID ])
+	get_obchunk(pos_x, pos_z).add( gameob )
+	if gameob[ Def.TX_TYPE ] == Def.TYPE_CHUNK:
+		received_chunks_dirty = true
+		received_chunks.operation( 1, pos_x, pos_z, Global.DATA.config['chunk_size'] )
+	
+func update_gameob(gameob: Dictionary, from, pos_x, pos_z):
+	if not objects.has( gameob[ Def.TX_ID ] ) \
+		|| objects[ gameob[Def.TX_ID] ][ Def.TX_UPDATED_AT ] > gameob[ Def.TX_UPDATED_AT ] \
+		|| objects[ gameob[Def.TX_ID] ][ Def.TX_FOCUS ] == Global.NET.my_id:
+		return false
+
+	var chunk_key = Fun.make_chunk_key(pos_x, pos_z)
+	
+	# if this is ghost, process it here
+	if gameob[ Def.TX_TYPE ] == Def.TYPE_GHOST:
+		return
+		
+	# write the new values todo optimize
+	for k in gameob.keys():
+		objects[ gameob[Def.TX_ID] ][ k ] = gameob[ k ]
+	
+	var enter = false
+	# the object has moved into another chunk
+	if chunk_key != objects[ gameob[Def.TX_ID] ][ Def.QUAD ]:
+		if objects[ gameob[Def.TX_ID] ][ Def.QUAD ]:
+			obchunks[ objects[ gameob[Def.TX_ID] ][ Def.QUAD ] ].remove( gameob )
+		objects[ gameob[Def.TX_ID] ][ Def.QUAD ] = chunk_key
+		enter = true
+	
+	get_obchunk(pos_x, pos_z).update( gameob, enter )
+
 var seen_players = []
 func _player_connected(id):
 	if not seen_players.has(id):
@@ -54,13 +107,16 @@ func load_scene():
 		Def.TX_NAME: name,
 		Def.TX_POSITION: Vector3(-440, 1, 128),
 		Def.TX_FOCUS: Global.NET.my_id,
+		Def.TX_TYPE: Def.TYPE_PLAYER,
 	}
-	Global.DATA.add_player(my_data)
-	Global.NET.tx( Global.NET.my_id )
+	Global.NET.ingest( my_data, 1, 'add' )
+	Global.NET.txr( [objects[ Global.NET.my_id ]] )
 	
 	if not Global.SRV:
 		# wait for world config from server
 		yield(Global.NET, "config_received")
+	
+	received_chunks = Global.DATA.qt_empty()
 	
 	# start the client services
 	# first load the world scene
@@ -68,7 +124,7 @@ func load_scene():
 #	var global = Global
 	scene = yield(Global, "scene_prepared")
 	player = preload('res://Player/Player.tscn').instance()
-	player.translation = Global.DATA.objects[ Global.NET.my_id ][ Def.TX_POSITION ]
+	player.translation = objects[ Global.NET.my_id ][ Def.TX_POSITION ]
 	scene.add_child(player)
 	
 	# instantiate the client services

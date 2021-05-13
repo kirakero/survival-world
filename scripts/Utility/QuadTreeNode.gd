@@ -45,6 +45,21 @@ func add_children(value = false):
 			NODE.new(x + half, y + half, half, value),
 	]
 
+
+func all_resize(_size):
+	if size == _size and value > 0:
+		return [ self ]
+	
+	var out = []
+	if value == 0 and child.size() == 0:
+		return []
+	if child.size() == 0:
+		add_children( value )
+	for c in child:
+		out.append_array( c.all_resize(_size) )
+			
+	return out
+	
 func all():
 	return query(x, y, size)
 

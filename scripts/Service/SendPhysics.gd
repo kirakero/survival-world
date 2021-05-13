@@ -21,8 +21,8 @@ func _run(delta):
 		return
 	last_pos = Global.CLI.player.translation
 	
-	Global.DATA.objects[ Global.NET.my_id ][ Def.TX_POSITION ] = last_pos
-	Global.NET.txs_partial( [Global.NET.my_id] )
+	Global.CLI.objects[ Global.NET.my_id ][ Def.TX_POSITION ] = last_pos
+	Global.NET.txp( [ Global.CLI.objects[ Global.NET.my_id ] ] )
 	
 	
 

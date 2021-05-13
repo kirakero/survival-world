@@ -31,7 +31,6 @@ func _init():
 	world_half = int(Global.DATA.config['world_size'] * 0.5)
 	loaded_chunks = Global.DATA.qt_empty()
 	loading_chunks = Global.DATA.qt_empty()
-	received_chunks = Global.DATA.qt_empty()
 	noise = OpenSimplexNoise.new()
 	noise.seed = 2
 	noise.octaves = 6
@@ -48,32 +47,20 @@ func run(delta):
 	
 	if processing:
 		return
-		
-		
-	
-			
+
 	# Do not run if we have nothing to do
 	# Use disabled so that the service can be tracked easily later
-	
-				
-	if disabled || Global.CLI.dirty_chunks.size() == 0:
-		
+	if disabled || not Global.CLI.received_chunks_dirty:
 		var next = render_queue.pop_front()
-		
 		if next != null:
-			
 			var thread = threads.pop_front()
-			if thread:
-				
+			if thread:				
 				thread.start(self, "render_chunk", [next, thread])
 #				print ('render queue is ', render_queue.size(), 'dirty ', api.dirty_objects_client.size())
 				if render_queue.size() == 0:
-					client.emit_signal('chunk_queue_empty')
+					Global.CLI.emit_signal('chunk_queue_empty')
 				return
-		
-		
-	
-		
+
 		
 	disabled = false
 	processing = true
@@ -83,44 +70,31 @@ func run(delta):
 
 
 func _run():
-	var pos_x = floor(player.translation.x / chunk_size) * chunk_size
-	var pos_z = floor(player.translation.z / chunk_size) * chunk_size
+	var pos_x = int(player.translation.x / chunk_size) * chunk_size
+	var pos_z = int(player.translation.z / chunk_size) * chunk_size
 	
-	if Global.CLI.dirty_chunks.size() == 0 and last_x == pos_x and last_z == pos_z:
+	if not Global.CLI.received_chunks_dirty and last_x == pos_x and last_z == pos_z:
 		processing = false
 		return
 	
 	last_x = pos_x
 	last_z = pos_z
 	
-	# Determine which chunks we'd like to see
-	var desired = Global.DATA.qt_empty()
-	print ('client chunk parameters', [pos_x, pos_z, max_range_chunk, chunk_size] )
-	desired.operation(QuadTree.OP_ADD, pos_x - max_range_chunk - chunk_size, pos_z - max_range_chunk, (max_range_chunk)*2)
-	desired.operation(QuadTree.OP_SUBTRACT, pos_x - max_range_chunk - chunk_size, pos_z - max_range_chunk, chunk_size)
-	desired.operation(QuadTree.OP_SUBTRACT, pos_x + (max_range_chunk)*2 - chunk_size, pos_z - max_range_chunk, chunk_size)
-	desired.operation(QuadTree.OP_SUBTRACT, pos_x - max_range_chunk - chunk_size, pos_z + (max_range_chunk)*2 - chunk_size, chunk_size)
-	desired.operation(QuadTree.OP_SUBTRACT, pos_x + (max_range_chunk)*2 - chunk_size, pos_z + (max_range_chunk)*2 - chunk_size, chunk_size)
+	# create a QuadTree 'circle' to select the chunks we'll work with
+	var desired = Global.DATA.qt_circle(pos_x, pos_z)
 	
-	# Determine which chunks we'd like to see
+	# Determine which chunks will be unloaded
 	var undesired = Global.DATA.qt_empty()
 	undesired.operation(QuadTree.OP_ADD, pos_x - min_range_chunk_unload, pos_z - min_range_chunk_unload, min_range_chunk_unload*2)
 
-	# Do the dirty work
-#	desired.debug()
-	for item in Global.CLI.get_and_forget_dirty_chunks():
-		print ('received %s'%item)
-		var i = Global.DATA.objects[ item ]
-		# this could be an empty chunk
-		received_chunks.operation(QuadTree.OP_ADD, i[Def.TX_POSITION].x, i[Def.TX_POSITION].y, chunk_size)
-
-
+	
 
 	# Remove chunks from desired that we don't have, are already loaded, or that will load
 	print( 'desired ')
 	print (desired.all_as_array())
 	print( 'received_chunks ')
-	print (received_chunks.all_as_array())
+	Global.CLI.received_chunks_dirty = false
+	print (Global.CLI.received_chunks.all_as_array())
 #	var need_loadu = QuadTree.union(received_chunks, desired)
 #
 #	print( 'after received_chunks ')
@@ -139,7 +113,7 @@ func _run():
 	need_load = QuadTree.intersect(loading_chunks, need_load, QuadTree.INTERSECT_KEEP_B)
 	print( 'after loading_chunks  ' )
 	print (need_load.all_as_array())
-	need_load = QuadTree.union(received_chunks, need_load)
+	need_load = QuadTree.union(Global.CLI.received_chunks, need_load)
 	print( 'after received_chunks  ' )
 	print (need_load.all_as_array())
 	
@@ -200,15 +174,16 @@ func render_process():
 	mutex.unlock()
 
 func render_chunk(_data):
-	var data = Global.DATA.objects[ _data[0] ]
+	var data = Global.CLI.objects[ _data[0] ]
 	var thread = _data[1]
 	var uncompressed = data[Def.TX_CHUNK_DATA]
 	if uncompressed.size() > 0:
 		uncompressed = data[Def.TX_CHUNK_DATA].decompress(pow(chunk_size + 2, 2) * 4)
 	
-	var chunk = Chunk.new(Vector2(data[Def.TX_POSITION].x, data[Def.TX_POSITION].z), uncompressed, PoolByteArray(), chunk_size)
+	var key = Fun.make_chunk_key(data[Def.TX_POSITION].x, data[Def.TX_POSITION].z)
+	var chunk = Global.CLI.chunks[ key ]
+	chunk.set_ChunkData( uncompressed, PoolByteArray() )
 	var mesh_chunk = chunk.get_ChunkMesh()
-	var key = chunk.get_key()
 	mesh_chunk.name = 'Chunk %s' % key
 	mesh_chunk.translation = data[Def.TX_POSITION]
 	

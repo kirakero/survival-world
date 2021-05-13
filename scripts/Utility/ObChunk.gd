@@ -5,10 +5,12 @@ var chunk: Chunk
 var chunk_key
 var my_objects: = []
 var ghosts: = {}
+var container
 
-func _init(_chunk):
+func _init(_chunk, _container):
 	chunk = _chunk
 	chunk_key = chunk.get_key()
+	container = _container
 
 # load the 'default' objects from the chunk raw data
 func load_all():
@@ -44,13 +46,13 @@ func add(gameob: Dictionary):
 	gameob[ Def.TX_CREATED_AT ] = ServerTime.now()
 	gameob[ Def.QUAD ] = chunk_key
 	gameob[ Def.QUAD_INDEX ] = local_index
-	Global.DATA.objects[ gameob[Def.TX_ID] ] = gameob
-	my_objects.append( Global.DATA.objects[ gameob[Def.TX_ID] ] )
+	container.objects[ gameob[Def.TX_ID] ] = gameob
+	my_objects.append( container.objects[ gameob[Def.TX_ID] ] )
 	
 func update(gameob: Dictionary, is_entering):
 	for k in gameob.keys():
-		Global.DATA.objects[ gameob[ Def.TX_ID ] ][ k ] = gameob[ k ]
-	gameob = Global.DATA.objects[ gameob[ Def.TX_ID ] ]
+		container.objects[ gameob[ Def.TX_ID ] ][ k ] = gameob[ k ]
+	gameob = container.objects[ gameob[ Def.TX_ID ] ]
 	if not is_entering and gameob.has( Def.QUAD_INDEX ):
 		var cur_index = gameob[ Def.QUAD_INDEX ]
 		my_objects.remove(gameob[ Def.QUAD_INDEX ])
@@ -58,6 +60,11 @@ func update(gameob: Dictionary, is_entering):
 	gameob[ Def.QUAD_INDEX ] = local_index
 	gameob[ Def.TX_UPDATED_AT ] = ServerTime.now()
 	my_objects.append( gameob )
+	
+# client side remove
+func remove(gameob: Dictionary):
+	my_objects.remove(gameob[ Def.QUAD_INDEX ])
+	gameob.erase( Def.QUAD_INDEX )
 	
 # game object has entered the zone
 # call the ghostbusters
@@ -94,7 +101,7 @@ func serialize(until = 0, exclude = ''):
 			# its a local friendly ghost
 			gameob = cur_key
 		else:
-			gameob = Global.DATA.objects[ cur_key ].duplicate()
+			gameob = container.objects[ cur_key ].duplicate()
 		# exclude allows the most efficient filtering of objects that should
 		# not be sent to the user transmitting their physics to the server
 		if gameob[ Def.TX_FOCUS ] == exclude:
@@ -122,7 +129,7 @@ func bifurcated_delta(since, exclude):
 			# its a local friendly ghost
 			gameob = cur_key
 		else:
-			gameob = Global.DATA.objects[ cur_key ].duplicate()
+			gameob = container.objects[ cur_key ].duplicate()
 		# exclude allows the most efficient filtering of objects that should
 		# not be sent to the user transmitting their physics to the server
 		if gameob.has( Def.TX_FOCUS ) and gameob[ Def.TX_FOCUS ] == exclude:
@@ -141,7 +148,7 @@ func bifurcated_delta(since, exclude):
 			# this is a physics update so we can send unreliable
 			txp.append( gameob )
 	
-	print ('bifur since ', since ,': ' , { 'txr': txr, 'txp': txp } )
+#	print ('bifur since ', since ,': ' , { 'txr': txr, 'txp': txp } )
 	return { 'txr': txr, 'txp': txp }
 		
 static func random_from_vector2(st: Vector2, mult = 1.0):

@@ -12,43 +12,47 @@ func _init():
 	world_half = int(world_size * 0.5)
 
 func send_chunks(pkey):
-	var player = Global.DATA.objects[ pkey ]
-	var chunks = Global.DATA.qt_empty()
+	var player = Global.SRV.objects[ pkey ]
+	var qt = Global.SRV.last_transmitted[ pkey ] as QuadTree
+
 	var pos_x = int(player[ Def.TX_POSITION ].x / chunk_size) * chunk_size
 	var pos_z = int(player[ Def.TX_POSITION ].z / chunk_size) * chunk_size
-	chunks.operation(QuadTree.OP_ADD, pos_x - max_range_chunk, pos_z - max_range_chunk, max_range_chunk*2)
-	chunks.operation(QuadTree.OP_SUBTRACT, pos_x - max_range_chunk - chunk_size, pos_z - max_range_chunk, chunk_size)
-	chunks.operation(QuadTree.OP_SUBTRACT, pos_x + (max_range_chunk)*2 - chunk_size, pos_z - max_range_chunk, chunk_size)
-	chunks.operation(QuadTree.OP_SUBTRACT, pos_x - max_range_chunk - chunk_size, pos_z + (max_range_chunk)*2 - chunk_size, chunk_size)
-	chunks.operation(QuadTree.OP_SUBTRACT, pos_x + (max_range_chunk)*2 - chunk_size, pos_z + (max_range_chunk)*2 - chunk_size, chunk_size)
+	
+	# create a QuadTree 'circle' to select the chunks we'll work with
+	var chunks = Global.DATA.qt_circle(pos_x, pos_z)
 	
 	var ts = ServerTime.now()
-	var will_send = QuadTree.intersect( Global.DATA.last_transmitted[ pkey ], chunks, QuadTree.INTERSECT_KEEP_B)
+	var will_send = QuadTree.intersect( qt, chunks, QuadTree.INTERSECT_KEEP_B)
 	
 	if will_send.is_empty():
+		Global.SRV._debug('will_send empty')
 		return
 
 	# make sure the chunks we need are loaded
-	Global.DATA.qt_get_chunks(will_send)
-		
+	var chunks_ready = Global.SRV.qt_get_chunks(will_send)
+	Global.SRV._debug('chunks_ready %s' % chunks_ready.size())
 	var txr = [] # whole - this is objects that havent been sent to the client
 	var txp = [] # partial - this is physics updates
 
-	for chunk in will_send.all():
-		var res = Global.DATA.obchunks[ chunk.key ].bifurcated_delta( chunk.value, pkey )
+	print (will_send.all_resize(chunk_size))
+	for chunk in will_send.all_resize(chunk_size):
+		var res = Global.SRV.obchunks[ chunk.key ].bifurcated_delta( chunk.value, pkey )
 		txr.append_array( res['txr'] ) # RPC RELIABLE - NEW OBJECTS
 		txp.append_array( res['txp'] ) # RPC UNRELIABLE - UPDATES
-		Global.DATA.last_transmitted[ pkey ].operation(ts, chunk.x, chunk.y, chunk.size)
+		qt.operation(chunk.value, chunk.x, chunk.y, chunk.size)
 
 	Global.NET.txr( txr, pkey )
 	Global.NET.txp( txp, pkey )
 
 func run():
-	var dirty = Global.DATA.dirty_players
-	Global.DATA.empty_dirty_players()
+	var dirty = Global.SRV.dirty_players
+	Global.SRV.empty_dirty_players()
 	for pkey in dirty:
-		call('send_chunks', pkey[ Def.TX_ID] )
 		
+		Global.SRV._debug('dirty player %s' % pkey)
+		call('send_chunks', pkey )
+
+
 	
 		
 	

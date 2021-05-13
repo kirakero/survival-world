@@ -8,13 +8,14 @@ var chunk_size: int
 var heights: = []
 var world_position
 
-func _init(_position: Vector2, _data, _obdata, _chunk_size = 64):
+func _init(_position: Vector2):
 	position = _position
 	world_position = Vector3(position.x, 0, position.y)
+	chunk_size = Global.DATA.config['chunk_size']
+
+func set_ChunkData( _data, _obdata):
 	data = _data #should already be uncompressed
 	obdata = _obdata
-	chunk_size = _chunk_size
-
 	generate_heights()
 
 func get_ChunkMesh():

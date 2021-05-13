@@ -3,34 +3,12 @@ class_name Network
 
 var my_id = 1
 
-	
-func tx(id, to = 1):
-	rpc_invoke_reliable(to, 'rxs', [Global.DATA.serialized( id )])
-
-#TRANSMIT MANY ID
-func txs(ids, to = 1):
-	if ids.size() == 0:
-		return
-	var data = Array()
-	data.resize( ids.size() )
-	for i in range(ids.size()):
-		data[ i ] =  Global.DATA.serialized( ids[i] ) 
-	rpc_invoke_reliable(to, 'rxs', data)
 
 # TRANSMIT MANY RAW
 func txr(data, to = 1):
 	if data.size() == 0:
 		return
 	rpc_invoke_reliable(to, 'rxs', data)
-
-# TRANSMIT MANY PARTIAL
-func txs_partial(ids, to = 1):
-	var data = Array()
-	data.resize( ids.size() )
-	for i in range(ids.size()):
-		data[ i ] =  Global.DATA.serialized_partial( ids[i] ) 
-	_debug("tx-p %s" % to_json(data))
-	rpc_invoke(to, 'rxs_partial', data)
 
 # TRANSMIT MANY PARTIAL RAW
 func txp(data, to = 1):
@@ -40,12 +18,31 @@ func txp(data, to = 1):
 
 func rxs(data: Array):
 	var sender_id = get_tree().get_rpc_sender_id()
-	Global.DATA.receive( data, sender_id )
+	# ingest the data
+	_debug("rx-r (from %s) %s" % [sender_id, to_json(data)] )
+	for item in data:
+		ingest( item, sender_id, 'add' )
 	
 func rxs_partial(data: Array):
 	var sender_id = get_tree().get_rpc_sender_id()
 	_debug("rx-p (from %s) %s" % [sender_id, to_json(data)] )
-	Global.DATA.receive_partial( data, sender_id )
+		# ingest the data
+	for item in data:
+		ingest( item, sender_id, 'update' )
+
+# Standardized RX data router
+func ingest(gameob: Dictionary, from, method):
+	# determine the chunk key
+	var pos_x: int = floor(gameob[ Def.TX_POSITION ].x / Global.DATA.config['chunk_size']) * Global.DATA.config['chunk_size']
+	var pos_z: int = floor(gameob[ Def.TX_POSITION ].z / Global.DATA.config['chunk_size']) * Global.DATA.config['chunk_size']
+
+	# CLI
+	if Global.CLI and from < 2:
+		Global.CLI.call("%s_gameob" % method, gameob, from, pos_x, pos_z)
+	# SRV
+	if Global.SRV and from != 1:
+		Global.SRV.call("%s_gameob" % method, gameob, from, pos_x, pos_z)
+
 
 #####################################################3
 ### STATE INOUT
