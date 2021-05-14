@@ -17,7 +17,7 @@ func set_chunkbasic(_chunk_basic):
 	x = _chunk_basic.position.x / chunk_size
 	z = _chunk_basic.position.y / chunk_size
 
-func _ready():
+func generate():
 	assert(chunk_basic != null)
 	generate_water()
 	generate_chunk()

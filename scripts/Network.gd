@@ -25,7 +25,7 @@ func rxs(data: Array):
 	
 func rxs_partial(data: Array):
 	var sender_id = get_tree().get_rpc_sender_id()
-	_debug("rx-p (from %s) %s" % [sender_id, to_json(data)] )
+#	_debug("rx-p (from %s) %s" % [sender_id, to_json(data)] )
 		# ingest the data
 	for item in data:
 		ingest( item, sender_id, 'update' )

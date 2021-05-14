@@ -17,7 +17,7 @@ var chunks_client = {}
 
 var dirty_objects = []
 var dirty_chunks = []
-var dirty_players = []
+var dirty_players = {}
 
 var qt_loaded_chunks: QuadTree
 
@@ -93,7 +93,7 @@ func add_gameob(gameob: Dictionary, from, pos_x, pos_z):
 	obchunks[ key ].add( gameob )
 	
 	if gameob[ Def.TX_TYPE ] == Def.TYPE_PLAYER:
-		dirty_players.append( gameob[ Def.TX_ID ] )
+		dirty_players[ gameob[ Def.TX_ID ] ] = true
 
 	
 func update_gameob(gameob: Dictionary, from, pos_x, pos_z):
@@ -118,15 +118,15 @@ func update_gameob(gameob: Dictionary, from, pos_x, pos_z):
 	if chunk_key != objects[ gameob[Def.TX_ID] ][ Def.QUAD ]:
 		# this is a special case for putting players into the chunks
 		if objects[ gameob[Def.TX_ID] ][ Def.QUAD ]:
-			chunks[ objects[ gameob[Def.TX_ID] ][ Def.QUAD ] ].exit( gameob[Def.TX_ID] )
-			chunks[ chunk_key ].enter( gameob[Def.TX_ID] )
+			obchunks[ objects[ gameob[Def.TX_ID] ][ Def.QUAD ] ].exit( gameob[Def.TX_ID] )
+			obchunks[ chunk_key ].enter( gameob[Def.TX_ID] )
 		objects[ gameob[Def.TX_ID] ][ Def.QUAD ] = chunk_key
 		obchunks[ chunk_key ].update( gameob, true )
 	else:
 		obchunks[ chunk_key ].update( gameob, false )
 
 	if objects[ gameob[Def.TX_ID] ][ Def.TX_TYPE ] == Def.TYPE_PLAYER:
-		dirty_players.append( gameob[ Def.TX_ID ] )
+		dirty_players[ gameob[ Def.TX_ID ] ] = true
 
 
 
@@ -173,7 +173,7 @@ func qt_get_chunks(tree: QuadTree) -> Array:
 
 	
 func empty_dirty_players():
-	dirty_players = []
+	dirty_players = {}
 	
 func serialized(id):
 	var gameob = objects[ id ].duplicate()

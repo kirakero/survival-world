@@ -25,7 +25,7 @@ func send_chunks(pkey):
 	var will_send = QuadTree.intersect( qt, chunks, QuadTree.INTERSECT_KEEP_B)
 	
 	if will_send.is_empty():
-		Global.SRV._debug('will_send empty')
+#		Global.SRV._debug('will_send empty')
 		return
 
 	# make sure the chunks we need are loaded
@@ -45,11 +45,9 @@ func send_chunks(pkey):
 	Global.NET.txp( txp, pkey )
 
 func run():
-	var dirty = Global.SRV.dirty_players
+	var dirty = Global.SRV.dirty_players.keys()
 	Global.SRV.empty_dirty_players()
 	for pkey in dirty:
-		
-		Global.SRV._debug('dirty player %s' % pkey)
 		call('send_chunks', pkey )
 
 

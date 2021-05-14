@@ -35,6 +35,16 @@ func set_config(value):
 func qt_empty():
 	return QuadTree.new(-config['world_size']*0.5, -config['world_size']*0.5, config['world_size'])
 
+func chunkkeys_circle(pos: Vector3):
+	var out = {}
+	for x in range(pos.x - config['max_range_chunk'], pos.x + config['max_range_chunk'], config['chunk_size']):
+		for z in range(pos.z - config['max_range_chunk'], pos.z + config['max_range_chunk'], config['chunk_size']):
+			var chunk = Vector3(x, 0, z)
+			if chunk.distance_to( pos ) <= config['max_range_chunk'] + config['chunk_size'] * 0.5:
+				out[ Fun.make_chunk_key(x, z) ] = chunk
+	return out
+
+
 func qt_circle(pos_x, pos_z) -> QuadTree:
 	var qt = qt_empty()
 	var max_range_chunk = config['max_range_chunk']

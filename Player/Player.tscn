@@ -19,7 +19,7 @@
 [ext_resource path="res://ui/velocity.png" type="Texture" id=17]
 [ext_resource path="res://Player/Status.gd" type="Script" id=18]
 
-[sub_resource type="CapsuleShape" id=24]
+[sub_resource type="CapsuleShape" id=1]
 radius = 0.382435
 height = 0.765446
 
@@ -139,7 +139,7 @@ __meta__ = {
 
 [node name="CollisionShape" type="CollisionShape" parent="."]
 transform = Transform( 1, 0, 0, 0, -4.37114e-08, -1, 0, 1, -4.37114e-08, 0, 0.725558, 0 )
-shape = SubResource( 24 )
+shape = SubResource( 1 )
 
 [node name="Mesh" type="Spatial" parent="."]
 

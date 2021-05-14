@@ -21,6 +21,11 @@ var obchunks: = {}
 var received_chunks: QuadTree
 var received_chunks_dirty = false
 
+
+# NEW SYS
+var loading_chunks: = {}
+var loaded_chunks: = {}
+
 signal client_loaded
 signal chunk_queue_empty
 
@@ -135,16 +140,12 @@ func load_scene():
 	player.physics_active = true
 
 
-func get_and_forget_dirty_chunks():
-	var dirty_chunks_ = dirty_chunks.duplicate()
-	dirty_chunks = []
-	return dirty_chunks_
-
+func _on_player_chunk_changed(pos):
+	services[1].update(pos)
 
 func _physics_process(delta):
 	for service in services:
 		service.run(delta)
-
 
 func _debug(message):
 	print ("CLI: %s" % message)

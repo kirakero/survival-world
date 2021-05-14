@@ -21,12 +21,18 @@ var roll_magnitude = 17
 var jump_speed = 10
 
 var physics_active = false
+var chunk_size = Vector3.ONE
+var last_pos
+
+signal chunk_changed
 
 func _ready():
 	direction = Vector3.BACK.rotated(Vector3.UP, $Camroot/h.global_transform.basis.get_euler().y)
 	# Sometimes in the level design you might need to rotate the Player object itself
 	# So changing the direction at the beginning
-
+	chunk_size = Vector3(Global.DATA.config['chunk_size'], 0.0, Global.DATA.config['chunk_size'])
+	
+	connect("chunk_changed", Global.CLI, "_on_player_chunk_changed")
 
 func _input(event):
 	
@@ -140,5 +146,10 @@ func _physics_process(delta):
 #	$Status/Label2.text = "direction.length() : " + String(direction.length())
 #	$Status/Label3.text = "velocity : " + String(velocity)
 #	$Status/Label4.text = "velocity.length() : " + String(velocity.length())
-
+	
+	var pos = (translation / chunk_size).round() * chunk_size
+	pos.y = 0
+	if pos != last_pos:
+		last_pos = pos
+		emit_signal('chunk_changed', last_pos)
 
