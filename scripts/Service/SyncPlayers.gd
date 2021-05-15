@@ -9,7 +9,12 @@ func _init():
 #	api = _api
 	pass
 	
-func run():
+var counter = 0.0
+func run(delta):
+	counter = counter + delta
+	if counter < 0.5:
+		return
+	counter = 0.0
 	# update and retransmit new player locations
 #	print ('PLAYERS ', api.objects[ Api.TYPE_PLAYER ].keys())
 #	for pkey in api.objects[ Api.TYPE_PLAYER ].keys():

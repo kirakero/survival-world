@@ -109,11 +109,6 @@ _global_script_classes=[ {
 "language": "GDScript",
 "path": "res://scripts/Network.gd"
 }, {
-"base": "Reference",
-"class": "ObChunk",
-"language": "GDScript",
-"path": "res://scripts/Utility/ObChunk.gd"
-}, {
 "base": "Node",
 "class": "Ocean",
 "language": "GDScript",
@@ -225,7 +220,6 @@ _global_script_class_icons={
 "MapSettings": "",
 "Model": "",
 "Network": "",
-"ObChunk": "",
 "Ocean": "",
 "OceanFeature": "",
 "Pipeline": "",

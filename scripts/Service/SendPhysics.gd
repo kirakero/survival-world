@@ -22,7 +22,8 @@ func _run(delta):
 	last_pos = Global.CLI.player.translation
 	
 	Global.CLI.objects[ Global.NET.my_id ][ Def.TX_POSITION ] = last_pos
-	Global.NET.txp( [ Global.CLI.objects[ Global.NET.my_id ] ] )
+	Global.CLI.objects[ Global.NET.my_id ][ Def.TX_UPDATED_AT ] = ServerTime.now()
+	Global.NET.txp( [ Global.CLI.objects[ Global.NET.my_id ] ], 1, true )
 	
 	
 

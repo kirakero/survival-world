@@ -10,17 +10,9 @@ var host
 var password
 var port
 
-var dirty_chunks: = []
-
 # OBJECT DATA
 var objects: = {}
 var chunks: = {}
-var obchunks: = {}
-
-# RECEIVED CHUNKS
-var received_chunks: QuadTree
-var received_chunks_dirty = false
-
 
 # NEW SYS
 var loading_chunks: = {}
@@ -48,26 +40,21 @@ func _startup():
 		Global.NET.my_id = get_tree().get_network_unique_id()
 		_debug('initiated connection, my id is %s ' % Global.NET.my_id)
 		get_tree().connect("network_peer_connected", self, "_player_connected")
+
 	else:
 		_player_connected(1)
 
-func get_obchunk(pos_x, pos_z):
-	# when the server loads a chunk
+func get_chunk(pos_x, pos_z):
 	var key = Fun.make_chunk_key(pos_x, pos_z)
-	if chunks.has( key ):
-		return obchunks[ key ]
-		
-	chunks[ key ] = Chunk.new( Vector2(pos_x, pos_z) )
-	obchunks[ key ] = ObChunk.new( chunks[ key ], self )
+	if not chunks.has( key ):
+		chunks[ key ] = Chunk.new( Vector2(pos_x, pos_z), self )
 	
-	return obchunks[ key ]
+	return chunks[ key ]
 
 func add_gameob(gameob: Dictionary, from, pos_x, pos_z):
-	_debug("received %s" % gameob[ Def.TX_ID ])
-	get_obchunk(pos_x, pos_z).add( gameob )
-	if gameob[ Def.TX_TYPE ] == Def.TYPE_CHUNK:
-		received_chunks_dirty = true
-		received_chunks.operation( 1, pos_x, pos_z, Global.DATA.config['chunk_size'] )
+#	_debug("received %s" % gameob[ Def.TX_ID ])
+	get_chunk(pos_x, pos_z).add( gameob )
+
 	
 func update_gameob(gameob: Dictionary, from, pos_x, pos_z):
 	if not objects.has( gameob[ Def.TX_ID ] ) \
@@ -83,17 +70,21 @@ func update_gameob(gameob: Dictionary, from, pos_x, pos_z):
 		
 	# write the new values todo optimize
 	for k in gameob.keys():
-		objects[ gameob[Def.TX_ID] ][ k ] = gameob[ k ]
+		objects[ gameob[ Def.TX_ID ] ][ k ] = gameob[ k ]
 	
 	var enter = false
 	# the object has moved into another chunk
 	if chunk_key != objects[ gameob[Def.TX_ID] ][ Def.QUAD ]:
 		if objects[ gameob[Def.TX_ID] ][ Def.QUAD ]:
-			obchunks[ objects[ gameob[Def.TX_ID] ][ Def.QUAD ] ].remove( gameob )
+			chunks[ objects[ gameob[Def.TX_ID] ][ Def.QUAD ] ].remove( gameob )
 		objects[ gameob[Def.TX_ID] ][ Def.QUAD ] = chunk_key
 		enter = true
 	
-	get_obchunk(pos_x, pos_z).update( gameob, enter )
+	get_chunk(pos_x, pos_z).update( gameob, enter )
+
+
+
+
 
 var seen_players = []
 func _player_connected(id):
@@ -106,6 +97,14 @@ func _player_connected(id):
 
 func load_scene():
 	scene = true
+
+	
+	if not Global.SRV:
+		_debug('waiting for config')
+		# wait for world config from server
+		yield(Global.NET, "config_received")
+	
+	
 	_debug("transmitting my data to server")
 	var my_data = {
 		Def.TX_ID: Global.NET.my_id,
@@ -114,14 +113,9 @@ func load_scene():
 		Def.TX_FOCUS: Global.NET.my_id,
 		Def.TX_TYPE: Def.TYPE_PLAYER,
 	}
+	
 	Global.NET.ingest( my_data, 1, 'add' )
-	Global.NET.txr( [objects[ Global.NET.my_id ]] )
-	
-	if not Global.SRV:
-		# wait for world config from server
-		yield(Global.NET, "config_received")
-	
-	received_chunks = Global.DATA.qt_empty()
+	Global.NET.txr( [ my_data ] )
 	
 	# start the client services
 	# first load the world scene

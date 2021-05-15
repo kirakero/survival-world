@@ -19,6 +19,9 @@ func _on_LoadGame_tree_entered():
 	rng.randomize()
 	$NinePatchRect/MarginContainer/VBoxContainer/SeedInput.text = str(rng.randi_range(1000000,9999999))
 	
+	print( OS.get_cmdline_args())
+	if OS.get_cmdline_args().size() == 2:
+		Global.start_server( OS.get_cmdline_args()[1], true, 'server_password' )
 #
 #	Global.api.local_server = true
 #	Global.api.send_player({'P': Vector3(1, 1, 1)})

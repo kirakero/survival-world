@@ -147,8 +147,7 @@ func _physics_process(delta):
 #	$Status/Label3.text = "velocity : " + String(velocity)
 #	$Status/Label4.text = "velocity.length() : " + String(velocity.length())
 	
-	var pos = (translation / chunk_size).round() * chunk_size
-	pos.y = 0
+	var pos = Global.DATA.get_chunk_pos( translation )
 	if pos != last_pos:
 		last_pos = pos
 		emit_signal('chunk_changed', last_pos)

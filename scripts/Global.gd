@@ -30,11 +30,19 @@ func start_local( game, server, password ):
 	add_child( CLI )
 	yield(CLI, "client_loaded")
 
+func start_server( game, server, password ):
+	goto_scene("res://scenes/LoadScene.tscn")
+	yield(self, "scene_loaded")
+	
+	SRV = Server.new( game, server, password )
+	call_deferred("add_child", SRV )
+	yield(SRV, "server_loaded")
+
 func start_remote( server, password ):
 	goto_scene("res://scenes/LoadScene.tscn")
 	yield(self, "scene_loaded")
 	
-	CLI = Client.new( 'kero' )
+	CLI = Client.new( 'kero', server, password )
 	call_deferred("add_child", CLI )
 	yield(CLI, "client_loaded")
 

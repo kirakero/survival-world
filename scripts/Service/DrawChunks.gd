@@ -55,14 +55,16 @@ func run(delta):
 		var thread = threads.pop_front()
 		if thread:				
 			thread.start(self, "render_chunk", [next, thread])
-			if render_queue.size() == 0:
+			if render_queue.size() == 0 and not tryagainpos:
 				Global.CLI.emit_signal('chunk_queue_empty')
 
 
 
 func update(pos):
 	tryagainpos = null
-	Global.CLI._debug('updating chunks with %s' % to_json( pos ))
+#	Global.CLI._debug('updating chunks with %s' % to_json( pos ))
+#	if Global.SRV and Global.SRV.players.has( Global.NET.my_id ):
+#		Global.SRV._debug('server player %s' % to_json( Global.SRV.players[ Global.NET.my_id ]['pos_new'] ))
 	var wanted = Global.DATA.chunkkeys_circle( pos )
 	for loaded in Global.CLI.loaded_chunks.keys():
 		if not wanted.has(loaded) \
@@ -93,10 +95,10 @@ func update(pos):
 	mutex.unlock()
 
 func render_process():
-	print('attempt render')
+#	print('attempt render')
 	
 	if threads.size() == 0 or render_queue.size() == 0:
-		if render_queue.size() == 0:
+		if render_queue.size() == 0 and not tryagainpos:
 			Global.CLI.emit_signal('chunk_queue_empty')
 		return
 		
@@ -109,12 +111,9 @@ func render_process():
 func render_chunk(_data):
 	var data = Global.CLI.objects[ _data[0] ]
 	var thread = _data[1]
-	var uncompressed = data[Def.TX_CHUNK_DATA]
-	if uncompressed.size() > 0:
-		uncompressed = data[Def.TX_CHUNK_DATA].decompress(pow(chunk_size + 2, 2) * 4)
 	
 	var chunk = Global.CLI.chunks[ _data[0] ]
-	chunk.set_ChunkData( uncompressed, PoolByteArray() )
+	chunk.set_ChunkData( data )
 	var mesh_chunk = chunk.get_ChunkMesh()
 	mesh_chunk.generate()
 	mesh_chunk.name = 'Chunk %s' % _data[0]
