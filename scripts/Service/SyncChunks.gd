@@ -39,9 +39,10 @@ func send_chunks( id, pos: Vector2 ):
 				var res = chunk.bifurcated_delta( player['chunks'][ wanted ][ 1 ], id )
 				# RPC RELIABLE - NEW OBJECTS
 				# send them right away to minimize the chance subpub are missed
-				Global.NET.txr( res['txr'], id ) 
+				Global.NET.txr( res['txr'], id, Global.NET.INTENT_CLIENT ) 
 				player['chunks'][ wanted ][ 0 ] = SUBSCRIBED
 				player['chunks'][ wanted ][ 1 ] = res['last']
+				Global.SRV.chunks[ wanted ].subscribers.append( id )
 				
 				# RPC UNRELIABLE - UPDATES
 				# these will be present if the player previously visited this chunk
@@ -54,10 +55,11 @@ func send_chunks( id, pos: Vector2 ):
 	for prev in player['previous_wanted']:
 		if not wanted_chunks.has( prev ):
 			player['chunks'][ prev ][ 0 ] = INACTIVE
+			Global.SRV.chunks[ prev ].subscribers.erase( id )
 
 	player['previous_wanted'] = wanted_chunks.keys()
 	
-	Global.NET.txp( txp, id )
+	Global.NET.txp( txp, id, Global.NET.INTENT_CLIENT )
 
 
 var counter = 0.0

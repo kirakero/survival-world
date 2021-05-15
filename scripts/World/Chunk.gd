@@ -14,7 +14,11 @@ var ghosts: = {}
 var chunk_key
 var fully_loaded = false
 
-var allow_update = [ Def.TX_POSITION ]
+var allow_update = [ Def.TX_POSITION, Def.TX_ROTATION ]
+
+var mesh
+
+var subscribers = []
 
 func _init(_position: Vector2, _container):
 	position = _position
@@ -86,7 +90,7 @@ func load_all():
 		var pos = Vector3.ZERO
 		pos.x = obdata[obj + 0] / chunk_size
 		pos.z = obdata[obj + 1] / chunk_size
-		pos.y = height_from_local( pos )
+		pos.y = height_from_local( pos ).y
 		pos = pos + world_position
 		
 		# note: this is the same format as from gameob.gd at wake()
@@ -109,17 +113,16 @@ func load_all():
 #		add(object)
 		
 
-func add(gameob: Dictionary):
-	var local_index = my_objects.size()
+func add(gameob: Dictionary, internal = false):
+	container._debug('ADD %s' % [gameob[ Def.TX_ID ]] )
 	gameob[ Def.TX_UPDATED_AT ] = ServerTime.now()
 	gameob[ Def.TX_CREATED_AT ] = ServerTime.now()
 	gameob[ Def.QUAD ] = chunk_key
-	gameob[ Def.QUAD_INDEX ] = local_index
 	container.objects[ gameob[Def.TX_ID] ] = gameob
 	my_objects.append( gameob[Def.TX_ID] )
-	print ( 'CHUNK ADD ', gameob[Def.TX_ID], ' to ', chunk_key, '@', local_index)
-	
-func update(gameob: Dictionary, is_entering):
+		
+func update(gameob: Dictionary, is_entering, internal = false):
+	container._debug('UPD %s' % [gameob[ Def.TX_ID ]] )
 	for k in gameob.keys():
 		if allow_update.has(k):
 			container.objects[ gameob[ Def.TX_ID ] ][ k ] = gameob[ k ]
@@ -130,6 +133,7 @@ func update(gameob: Dictionary, is_entering):
 
 	container.objects[ gameob[ Def.TX_ID ] ][ Def.QUAD ] = chunk_key
 	container.objects[ gameob[ Def.TX_ID ] ][ Def.TX_UPDATED_AT ] = ServerTime.now()
+
 	
 # client side remove
 func remove(gameob: Dictionary):

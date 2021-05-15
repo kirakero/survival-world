@@ -7,9 +7,52 @@ var data: PoolByteArray
 var chunk_size
 var should_remove = true 
 var chunk_basic setget set_chunkbasic
+var load_queue = []
 
 func _init():
 	pass
+	
+
+func _ready():
+	var objects = Global.CLI.chunks[ chunk_basic.chunk_key ].my_objects.duplicate()
+	for ob in objects:
+		Global.CLI._debug('spawn check %s' % ob)
+		if Global.CLI.objects[ ob ][ Def.TX_TYPE ] == Def.TYPE_RESOURCE \
+		or Global.CLI.objects[ ob ][ Def.TX_TYPE ] == Def.TYPE_PLAYER and ob != Global.NET.my_id:
+			Global.CLI._debug('will spawn %s' % ob)
+			load_queue.append( ob )
+
+func _physics_process(delta):
+	
+	if load_queue.size() == 0 or Global.CLI.chunk_threads.size() == 0:
+		return
+
+	Global.CLI.chunk_mutex.lock()
+	var id = load_queue.pop_back()
+	var thread: Thread = Global.CLI.chunk_threads.pop_back()
+	Global.CLI.chunk_mutex.unlock()
+	thread.start(self, "load_gameob", [id, thread])
+
+func load_gameob(_data):
+	var id = _data[0]
+	var thread = _data[1]
+	var obj
+	match Global.CLI.objects[ id ][ Def.TX_TYPE ]:
+		Def.TYPE_RESOURCE:
+			obj = preload("res://assets/Tree.tscn").instance()
+			obj.init( id, self )
+		Def.TYPE_PLAYER:
+			obj = preload("res://assets/OtherPlayer.tscn").instance()
+			obj.init( id, self )
+			
+	call_deferred("add_child", obj)
+	call_deferred('load_done', thread)
+
+func load_done(thread):
+	thread.wait_to_finish()
+	Global.CLI.chunk_mutex.lock()
+	Global.CLI.chunk_threads.append(thread)
+	Global.CLI.chunk_mutex.unlock()
 
 func set_chunkbasic(_chunk_basic):
 	chunk_basic = _chunk_basic

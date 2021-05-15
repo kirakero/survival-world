@@ -34,6 +34,7 @@ const DIRTY_ID = 2
 
 const QUAD = '_Q'
 const QUAD_INDEX = '_I'
+const REF = '_R'
 
 const TX_PHYS_POSITION 		= 'P'
 const TX_PHYS_ROTATION 		= 'R'

@@ -8,7 +8,6 @@ var chunk_size
 var world_half
 var loaded_chunks: QuadTree
 var loading_chunks: QuadTree
-var loaded_ref = {}
 var received_chunks: QuadTree
 var render_queue = []
 var unload_queue = []
@@ -70,7 +69,7 @@ func update(pos):
 		if not wanted.has(loaded) \
 		and Global.CLI.loaded_chunks[ loaded ].distance_to( pos ) > Global.DATA.config['max_range_chunk'] * 1.25:
 			# CHUNK UNLOAD
-			loaded_ref[ loaded ].queue_free()
+			Global.CLI.loaded_ref[ loaded ].queue_free()
 			Global.CLI.loaded_chunks.erase( loaded )
 		else:
 			# CHUNK IGNORE (already loaded)
@@ -123,7 +122,7 @@ func render_chunk(_data):
 
 func render_done(key, thread, mesh_chunk):
 	thread.wait_to_finish()
-	loaded_ref[key] = mesh_chunk
+	Global.CLI.loaded_ref[ key ] = mesh_chunk
 	Global.CLI.loaded_chunks[ key ] = mesh_chunk.translation * Vector3(1, 0, 1)
 #	loaded_chunks.operation(QuadTree.OP_ADD, mesh_chunk.translation.x, mesh_chunk.translation.z, chunk_size)
 #	loading_chunks.operation(QuadTree.OP_SUBTRACT, mesh_chunk.translation.x, mesh_chunk.translation.z, chunk_size)

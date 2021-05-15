@@ -75,7 +75,7 @@ func first(position: Vector2):
 			Def.TX_UPDATED_AT: ServerTime.now(),
 			Def.TX_CREATED_AT: ServerTime.now(),
 			Def.TX_CHUNK_DATA: res[0]['chunk'],
-			Def.TX_OBJECT_DATA: PoolByteArray(),
+			Def.TX_OBJECT_DATA: PoolByteArray([127, 127, 1]),
 		}
 	return {
 		Def.TX_ID: Fun.make_chunk_key(position.x, position.y),

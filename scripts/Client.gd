@@ -17,6 +17,10 @@ var chunks: = {}
 # NEW SYS
 var loading_chunks: = {}
 var loaded_chunks: = {}
+var loaded_ref: = {}
+
+var chunk_mutex
+var chunk_threads
 
 signal client_loaded
 signal chunk_queue_empty
@@ -26,6 +30,8 @@ func _init( _character, _host = null, _password = null, _port = 2480 ):
 	host = _host
 	password = _password
 	port = _port
+	chunk_mutex = Mutex.new()
+	chunk_threads = [ Thread.new(), Thread.new(), Thread.new(), Thread.new(), ]
 			
 	connect("tree_entered", self, "_startup")
 	connect("tree_exited", self, "_shutdown")
@@ -53,7 +59,11 @@ func get_chunk(pos_x, pos_z):
 
 func add_gameob(gameob: Dictionary, from, pos_x, pos_z):
 #	_debug("received %s" % gameob[ Def.TX_ID ])
-	get_chunk(pos_x, pos_z).add( gameob )
+	get_chunk(pos_x, pos_z).add( gameob, from == 0 )
+	var key = Fun.make_chunk_key(pos_x, pos_z)
+
+	if loaded_ref.has( key ):
+		loaded_ref[ key ].load_queue.append( gameob[ Def.TX_ID ])
 
 	
 func update_gameob(gameob: Dictionary, from, pos_x, pos_z):
@@ -80,8 +90,10 @@ func update_gameob(gameob: Dictionary, from, pos_x, pos_z):
 		objects[ gameob[Def.TX_ID] ][ Def.QUAD ] = chunk_key
 		enter = true
 	
-	get_chunk(pos_x, pos_z).update( gameob, enter )
+	get_chunk(pos_x, pos_z).update( gameob, enter, from == 0 )
 
+	if objects[ gameob[ Def.TX_ID ] ].has( Def.REF ):
+		objects[ gameob[ Def.TX_ID ] ][ Def.REF ].on_rx_change()
 
 
 
@@ -110,12 +122,13 @@ func load_scene():
 		Def.TX_ID: Global.NET.my_id,
 		Def.TX_NAME: name,
 		Def.TX_POSITION: Vector3(-440, 1, 128),
+		Def.TX_ROTATION: Vector3.ZERO,
 		Def.TX_FOCUS: Global.NET.my_id,
 		Def.TX_TYPE: Def.TYPE_PLAYER,
 	}
 	
-	Global.NET.ingest( my_data, 1, 'add' )
-	Global.NET.txr( [ my_data ] )
+	Global.NET.ingest( my_data, 1, 'add', Global.NET.INTENT_CLIENT )
+	Global.NET.txr( [ my_data ], 1, Global.NET.INTENT_SERVER )
 	
 	# start the client services
 	# first load the world scene

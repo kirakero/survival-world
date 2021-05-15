@@ -74,7 +74,7 @@ _global_script_classes=[ {
 "language": "GDScript",
 "path": "res://scripts/Utility/Functions.gd"
 }, {
-"base": "Reference",
+"base": "Spatial",
 "class": "GameOb",
 "language": "GDScript",
 "path": "res://scripts/Utility/GameOb.gd"

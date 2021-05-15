@@ -83,7 +83,8 @@ func add_gameob(gameob: Dictionary, from, pos_x, pos_z):
 		_debug("Warning: Receiving object %s again" % gameob[ Def.TX_ID ])
 		return
 	
-	get_chunk(pos_x, pos_z).add( gameob )
+	var chunk = get_chunk(pos_x, pos_z)
+	chunk.add( gameob )
 	
 	if gameob[ Def.TX_TYPE ] == Def.TYPE_PLAYER:
 		players[ gameob[ Def.TX_ID ] ] = {
@@ -92,6 +93,10 @@ func add_gameob(gameob: Dictionary, from, pos_x, pos_z):
 			'chunks': {},
 			'previous_wanted': [], 
 		}
+	
+	for sub in chunk.subscribers:	
+		if objects[ gameob[ Def.TX_ID ] ][ Def.TX_FOCUS ] != sub:
+			Global.NET.txr( [ objects[ gameob[ Def.TX_ID ] ]], sub, Global.NET.INTENT_CLIENT )
 
 
 func update_gameob(gameob: Dictionary, from, pos_x, pos_z):
@@ -117,11 +122,14 @@ func update_gameob(gameob: Dictionary, from, pos_x, pos_z):
 		chunks[ old ].remove( gameob )
 		enter = true
 	
-	get_chunk(pos_x, pos_z).update( gameob, enter )
+	var chunk = get_chunk(pos_x, pos_z)
+	chunk.update( gameob, enter )
 	if gameob[ Def.TX_TYPE ] == Def.TYPE_PLAYER:
 		players[ gameob[ Def.TX_ID ] ][ 'pos_new' ] = Vector2(pos_x, pos_z)
 
-	assert( objects[ gameob[Def.TX_ID] ][ Def.QUAD ]  == chunk_key )
+	for sub in chunk.subscribers:	
+		if objects[ gameob[ Def.TX_ID ] ][ Def.TX_FOCUS ] != sub:
+			Global.NET.txp( [ objects[ gameob[ Def.TX_ID ] ]], sub, Global.NET.INTENT_CLIENT )
 
 
 	
