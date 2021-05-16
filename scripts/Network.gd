@@ -82,5 +82,43 @@ remote func rx_config(_data: Dictionary):
 	emit_signal("config_received")
 
 
+func tx_time_clisrv( mode = 0 ):
+	rpc_invoke_reliable(1, "rx_time_clisrv", [Global.CLI.time.system(), mode])
+
+func tx_time_srvcli(to, cli_time):
+	rpc_invoke_reliable(to, "rx_time_srvcli", [Global.SRV.time.now(), cli_time])
+
+remote func rx_time_clisrv(data):
+	var sender_id = get_tree().get_rpc_sender_id()
+	tx_time_srvcli(sender_id, data)
+
+remote func rx_time_srvcli(data):
+	if data[1][1] == 1:
+		print( Global.CLI.time.system(), data )
+		Global.CLI.time.clock = data[0] + (Global.CLI.time.system() - data[1][0]) / 2
+	else:
+		Global.CLI.time.add_latency( (Global.CLI.time.system() - data[1][0]) / 2 )
+		
+	
+
 func _debug(message):
 	print ("NET: %s" % message)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

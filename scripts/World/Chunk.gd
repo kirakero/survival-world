@@ -105,6 +105,8 @@ func load_all():
 			Def.TX_ROTATION: Vector3(0, random_from_vector2(Vector2(pos.x, pos.y), 360.0), 0),
 			Def.TX_SUBTYPE: obdata[obj + 2],
 			Def.TX_ORIGIN: Def.ORIGIN_BASEMAP,
+			Def.TX_CREATED_AT: Global.SRV.time.now(),
+			Def.TX_UPDATED_AT: Global.SRV.time.now(),
 		})
 	
 	fully_loaded = true
@@ -114,15 +116,14 @@ func load_all():
 		
 
 func add(gameob: Dictionary, internal = false):
-	container._debug('ADD %s' % [gameob[ Def.TX_ID ]] )
-	gameob[ Def.TX_UPDATED_AT ] = ServerTime.now()
-	gameob[ Def.TX_CREATED_AT ] = ServerTime.now()
+	assert(gameob.has(Def.TX_CREATED_AT))
+	assert(gameob.has(Def.TX_UPDATED_AT))
 	gameob[ Def.QUAD ] = chunk_key
 	container.objects[ gameob[Def.TX_ID] ] = gameob
 	my_objects.append( gameob[Def.TX_ID] )
 		
 func update(gameob: Dictionary, is_entering, internal = false):
-	container._debug('UPD %s' % [gameob[ Def.TX_ID ]] )
+	assert(gameob.has(Def.TX_UPDATED_AT))
 	for k in gameob.keys():
 		if allow_update.has(k):
 			container.objects[ gameob[ Def.TX_ID ] ][ k ] = gameob[ k ]
@@ -132,7 +133,6 @@ func update(gameob: Dictionary, is_entering, internal = false):
 	my_objects.append( gameob[ Def.TX_ID ] )
 
 	container.objects[ gameob[ Def.TX_ID ] ][ Def.QUAD ] = chunk_key
-	container.objects[ gameob[ Def.TX_ID ] ][ Def.TX_UPDATED_AT ] = ServerTime.now()
 
 	
 # client side remove
@@ -155,7 +155,7 @@ func exit( id ):
 		Def.TX_ID: g_id,
 		Def.TX_TYPE: Def.TYPE_GHOST,
 		Def.TX_POSITION: world_position, 
-		Def.TX_UPDATED_AT: ServerTime.now(),
+		Def.TX_UPDATED_AT: container.time.now(),
 	})
 
 

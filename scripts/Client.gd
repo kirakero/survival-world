@@ -22,6 +22,8 @@ var loaded_ref: = {}
 var chunk_mutex
 var chunk_threads
 
+var time
+
 signal client_loaded
 signal chunk_queue_empty
 
@@ -32,7 +34,9 @@ func _init( _character, _host = null, _password = null, _port = 2480 ):
 	port = _port
 	chunk_mutex = Mutex.new()
 	chunk_threads = [ Thread.new(), Thread.new(), Thread.new(), Thread.new(), ]
-			
+	
+	time = ServerTime.new()
+	
 	connect("tree_entered", self, "_startup")
 	connect("tree_exited", self, "_shutdown")
 
@@ -48,6 +52,7 @@ func _startup():
 		get_tree().connect("network_peer_connected", self, "_player_connected")
 
 	else:
+		time = Global.SRV.time
 		_player_connected(1)
 
 func get_chunk(pos_x, pos_z):
@@ -110,6 +115,8 @@ func _player_connected(id):
 func load_scene():
 	scene = true
 
+	_debug('syncing time')
+	Global.NET.tx_time_clisrv( 1 )
 	
 	if not Global.SRV:
 		_debug('waiting for config')
@@ -125,6 +132,8 @@ func load_scene():
 		Def.TX_ROTATION: Vector3.ZERO,
 		Def.TX_FOCUS: Global.NET.my_id,
 		Def.TX_TYPE: Def.TYPE_PLAYER,
+		Def.TX_UPDATED_AT: Global.CLI.time.now(),
+		Def.TX_CREATED_AT: Global.CLI.time.now(),
 	}
 	
 	Global.NET.ingest( my_data, 1, 'add', Global.NET.INTENT_CLIENT )
@@ -142,6 +151,7 @@ func load_scene():
 	# instantiate the client services
 	services.append( load("res://scripts/Service/SendPhysics.gd").new() )
 	services.append( load("res://scripts/Service/DrawChunks.gd").new() )
+	services.append( load("res://scripts/Service/SendTime.gd").new() )
 	
 	yield(self, "chunk_queue_empty")
 	player.physics_active = true

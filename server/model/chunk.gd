@@ -72,8 +72,8 @@ func first(position: Vector2):
 			Def.TX_ID: Fun.make_chunk_key(position.x, position.y),
 			Def.TX_TYPE: Def.TYPE_CHUNK,
 			Def.TX_POSITION: Vector3(res[0]['pos_x'], 0, res[0]['pos_y']),
-			Def.TX_UPDATED_AT: ServerTime.now(),
-			Def.TX_CREATED_AT: ServerTime.now(),
+			Def.TX_UPDATED_AT: Global.SRV.time.now(),
+			Def.TX_CREATED_AT: Global.SRV.time.now(),
 			Def.TX_CHUNK_DATA: res[0]['chunk'],
 			Def.TX_OBJECT_DATA: PoolByteArray([127, 127, 1]),
 		}
@@ -81,8 +81,8 @@ func first(position: Vector2):
 		Def.TX_ID: Fun.make_chunk_key(position.x, position.y),
 		Def.TX_TYPE: Def.TYPE_CHUNK,
 		Def.TX_POSITION: Vector3(position.x, 0, position.y),
-		Def.TX_UPDATED_AT: ServerTime.now(),
-		Def.TX_CREATED_AT: ServerTime.now(),
+		Def.TX_UPDATED_AT: Global.SRV.time.now(),
+		Def.TX_CREATED_AT: Global.SRV.time.now(),
 		Def.TX_CHUNK_DATA: PoolByteArray(),
 		Def.TX_OBJECT_DATA: PoolByteArray(),
 	}

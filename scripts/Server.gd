@@ -23,6 +23,8 @@ var loader
 
 var last_transmitted = {}
 
+var time
+
 signal server_loaded
 
 func _init( _game, _networked = false, _password = null, _port = 2480, _max_players = 10 ):
@@ -40,6 +42,7 @@ func _startup():
 	
 	Global.DATA.add_mode( Def.MODE_SERVER )
 	Global.DATA.set_world(game)
+	time = ServerTime.new()
 
 	if (networked):
 		var peer = NetworkedMultiplayerENet.new()
@@ -84,6 +87,7 @@ func add_gameob(gameob: Dictionary, from, pos_x, pos_z):
 		return
 	
 	var chunk = get_chunk(pos_x, pos_z)
+	
 	chunk.add( gameob )
 	
 	if gameob[ Def.TX_TYPE ] == Def.TYPE_PLAYER:
@@ -102,9 +106,12 @@ func add_gameob(gameob: Dictionary, from, pos_x, pos_z):
 func update_gameob(gameob: Dictionary, from, pos_x, pos_z):
 	if not objects.has( gameob[ Def.TX_ID ] ) \
 		|| objects[ gameob[Def.TX_ID] ][ Def.TX_UPDATED_AT ] > gameob[ Def.TX_UPDATED_AT ]:
-		_debug('rej %s' %  gameob[ Def.TX_ID ] )	
+		_debug('rej %s (ours %s  theirs %s)' %  [ gameob[ Def.TX_ID ], objects[ gameob[Def.TX_ID] ][ Def.TX_UPDATED_AT ] , gameob[ Def.TX_UPDATED_AT ]] )	
 		return false
-
+		
+	
+#	_debug('acp %s (ours %s  theirs %s)' %  [ gameob[ Def.TX_ID ], objects[ gameob[Def.TX_ID] ][ Def.TX_UPDATED_AT ] , gameob[ Def.TX_UPDATED_AT ]] )	
+		
 	var chunk_key = Fun.make_chunk_key(pos_x, pos_z)
 	
 	# if this is ghost, process it here
@@ -124,6 +131,9 @@ func update_gameob(gameob: Dictionary, from, pos_x, pos_z):
 	
 	var chunk = get_chunk(pos_x, pos_z)
 	chunk.update( gameob, enter )
+	
+	objects[ gameob[Def.TX_ID] ][ Def.TX_UPDATED_AT ] = gameob[ Def.TX_UPDATED_AT ]
+	
 	if gameob[ Def.TX_TYPE ] == Def.TYPE_PLAYER:
 		players[ gameob[ Def.TX_ID ] ][ 'pos_new' ] = Vector2(pos_x, pos_z)
 
