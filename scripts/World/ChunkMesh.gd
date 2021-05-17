@@ -39,7 +39,7 @@ func load_gameob(_data):
 	var obj
 	match Global.CLI.objects[ id ][ Def.TX_TYPE ]:
 		Def.TYPE_RESOURCE:
-			obj = preload("res://assets/Tree.tscn").instance()
+			obj = preload("res://assets/tree.tscn").instance()
 			obj.init( id, self )
 		Def.TYPE_PLAYER:
 			obj = preload("res://assets/OtherPlayer.tscn").instance()

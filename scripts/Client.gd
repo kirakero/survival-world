@@ -27,7 +27,7 @@ var time
 signal client_loaded
 signal chunk_queue_empty
 
-func _init( _character, _host = null, _password = null, _port = 2456 ):
+func _init( _character, _host = null, _password = null, _port = 2480 ):
 	character = _character
 	host = _host
 	password = _password
