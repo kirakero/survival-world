@@ -55,6 +55,14 @@ func _physics_process(delta):
 			should_roll = false
 			anim.set("parameters/roll/active", true)
 		
+		# latency correction
+		if state_buffer[0].has( Def.TX_LATENCY ):
+			var lat = (state_buffer[0][ Def.TX_LATENCY ] + Global.CLI.time.latency) * 2.0
+			if lat > 1000:
+				interpolation_offset = lat
+			else:
+				lat = 1000
+		
 		state_buffer.remove(0)
 	
 	if state_buffer.size() < 2:

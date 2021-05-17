@@ -25,6 +25,8 @@ const TX_CREATED_AT = 'A' # created at
 const TX_CHUNK_DATA = 'C' # compressed chunk data
 const TX_OBJECT_DATA = 'r' # uncompressed chunk default objects
 
+const TX_LATENCY = 'L'
+
 const INTENT_CLIENT = 0		# objects in the local/player domain
 const INTENT_SERVER = 1		# objects in the server/world domain
 

@@ -65,11 +65,13 @@ func update(pos):
 #	if Global.SRV and Global.SRV.players.has( Global.NET.my_id ):
 #		Global.SRV._debug('server player %s' % to_json( Global.SRV.players[ Global.NET.my_id ]['pos_new'] ))
 	var wanted = Global.DATA.chunkkeys_circle( pos )
+	
 	for loaded in Global.CLI.loaded_chunks.keys():
 		if not wanted.has(loaded) \
 		and Global.CLI.loaded_chunks[ loaded ].distance_to( pos ) > Global.DATA.config['max_range_chunk'] * 1.25:
 			# CHUNK UNLOAD
 			Global.CLI.loaded_ref[ loaded ].queue_free()
+			Global.CLI.loaded_ref.erase( loaded )
 			Global.CLI.loaded_chunks.erase( loaded )
 		else:
 			# CHUNK IGNORE (already loaded)
@@ -79,6 +81,7 @@ func update(pos):
 	for loading in Global.CLI.loading_chunks.keys():
 		wanted.erase( loading )
 		
+	print(Global.CLI.loading_chunks.keys())
 	mutex.lock()
 	for chunk in wanted.keys():
 		# CHUNK SKIP (data not available yet)
@@ -122,6 +125,7 @@ func render_chunk(_data):
 func render_done(key, thread, mesh_chunk):
 	thread.wait_to_finish()
 	Global.CLI.loaded_ref[ key ] = mesh_chunk
+	Global.CLI.loading_chunks.erase( key )
 	Global.CLI.loaded_chunks[ key ] = mesh_chunk.translation * Vector3(1, 0, 1)
 #	loaded_chunks.operation(QuadTree.OP_ADD, mesh_chunk.translation.x, mesh_chunk.translation.z, chunk_size)
 #	loading_chunks.operation(QuadTree.OP_SUBTRACT, mesh_chunk.translation.x, mesh_chunk.translation.z, chunk_size)

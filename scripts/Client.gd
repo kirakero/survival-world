@@ -27,7 +27,7 @@ var time
 signal client_loaded
 signal chunk_queue_empty
 
-func _init( _character, _host = null, _password = null, _port = 2480 ):
+func _init( _character, _host = null, _password = null, _port = 2456 ):
 	character = _character
 	host = _host
 	password = _password
@@ -138,6 +138,7 @@ func load_scene():
 		Def.TX_PLAYER_IWR: -1,
 		Def.TX_UPDATED_AT: Global.CLI.time.now(),
 		Def.TX_CREATED_AT: Global.CLI.time.now(),
+		Def.TX_LATENCY: Global.CLI.time.latency,
 	}
 	
 	Global.NET.ingest( my_data, 1, 'add', Global.NET.INTENT_CLIENT )
