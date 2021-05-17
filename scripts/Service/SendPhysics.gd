@@ -26,7 +26,9 @@ func run(delta):
 
 	for k in Global.CLI.player.tx.keys():
 		Global.CLI.objects[ Global.NET.my_id ][ k ] = Global.CLI.player.tx[ k ]
-	
+		
+	Global.CLI.objects[ Global.NET.my_id ][ Def.TX_PLAYER_ROLL ] = Global.CLI.player.will_roll
+	Global.CLI.player.will_roll = false
 #	print (Global.CLI.player.tx)
 	Global.CLI.objects[ Global.NET.my_id ][ Def.TX_UPDATED_AT ] = Global.CLI.time.now()
 	Global.NET.txp( [ Global.CLI.objects[ Global.NET.my_id ] ], 1, Global.NET.INTENT_SERVER )

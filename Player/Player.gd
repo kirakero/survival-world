@@ -160,11 +160,10 @@ func _physics_process(delta):
 		Def.TX_PLAYER_STRAFE: Vector2(-strafe.x, strafe.z),
 		Def.TX_PLAYER_IWR: velocity.length(),
 		Def.TX_PLAYER_AIM: aim,
-		Def.TX_PLAYER_ROLL: will_roll,
+		Def.TX_PLAYER_ROLL: false,
 		Def.TX_ROTATION: $Mesh.rotation,
 		Def.TX_POSITION: translation
 	}
-	will_roll = false
 #	$Status/Label.text = "direction : " + String(direction)
 #	$Status/Label2.text = "direction.length() : " + String(direction.length())
 #	$Status/Label3.text = "velocity : " + String(velocity)
