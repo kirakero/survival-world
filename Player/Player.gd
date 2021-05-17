@@ -23,6 +23,9 @@ var jump_speed = 10
 var physics_active = false
 var chunk_size = Vector3.ONE
 var last_pos
+var will_roll = false
+
+var tx
 
 signal chunk_changed
 
@@ -31,7 +34,14 @@ func _ready():
 	# Sometimes in the level design you might need to rotate the Player object itself
 	# So changing the direction at the beginning
 	chunk_size = Vector3(Global.DATA.config['chunk_size'], 0.0, Global.DATA.config['chunk_size'])
-	
+	tx = {
+		Def.TX_PLAYER_STRAFE:  Vector2(0, 0),
+		Def.TX_PLAYER_IWR: 0,
+		Def.TX_PLAYER_AIM: 1,
+		Def.TX_PLAYER_ROLL: false,
+		Def.TX_ROTATION: $Mesh.rotation,
+		Def.TX_POSITION: translation
+	}
 	connect("chunk_changed", Global.CLI, "_on_player_chunk_changed")
 
 func _input(event):
@@ -56,6 +66,7 @@ func _input(event):
 				velocity = direction * roll_magnitude
 				$roll_window.stop()
 				$AnimationTree.set("parameters/roll/active", true)
+				will_roll = true
 				$AnimationTree.set("parameters/aim_transition/current", 1)
 				$roll_timer.start()
 
@@ -65,7 +76,7 @@ func _physics_process(delta):
 		acceleration = 3.5
 	else:
 		acceleration = 5
-	
+	var aim = 0
 	if Input.is_action_pressed("aim"):
 		$Status/Aim.color = Color("ff6666")
 		if !$AnimationTree.get("parameters/roll/active"):
@@ -73,6 +84,7 @@ func _physics_process(delta):
 	else:
 		$Status/Aim.color = Color("ffffff")
 		$AnimationTree.set("parameters/aim_transition/current", 1)
+		aim = 1
 	
 	
 	var h_rot = $Camroot/h.global_transform.basis.get_euler().y
@@ -134,14 +146,25 @@ func _physics_process(delta):
 
 	#find the graph here: https://www.desmos.com/calculator/4z9devx1ky
 
+	var iwr = -1
 	if velocity.length() <= walk_speed:
 		$AnimationTree.set("parameters/iwr_blend/blend_amount" , iw_blend)
+		iwr = iw_blend
 	else:
 		$AnimationTree.set("parameters/iwr_blend/blend_amount" , wr_blend)
-	
+		iwr = wr_blend
+		
 	aim_turn = 0
 	
-	
+	tx = {
+		Def.TX_PLAYER_STRAFE: Vector2(-strafe.x, strafe.z),
+		Def.TX_PLAYER_IWR: velocity.length(),
+		Def.TX_PLAYER_AIM: aim,
+		Def.TX_PLAYER_ROLL: will_roll,
+		Def.TX_ROTATION: $Mesh.rotation,
+		Def.TX_POSITION: translation
+	}
+	will_roll = false
 #	$Status/Label.text = "direction : " + String(direction)
 #	$Status/Label2.text = "direction.length() : " + String(direction.length())
 #	$Status/Label3.text = "velocity : " + String(velocity)

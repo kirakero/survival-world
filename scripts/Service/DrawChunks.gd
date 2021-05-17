@@ -115,7 +115,6 @@ func render_chunk(_data):
 	chunk.set_ChunkData( data )
 	var mesh_chunk = chunk.get_ChunkMesh()
 	mesh_chunk.generate()
-	mesh_chunk.name = 'Chunk %s' % _data[0]
 	mesh_chunk.translation = data[Def.TX_POSITION]
 	
 	call_deferred('render_done', _data[0], thread, mesh_chunk)

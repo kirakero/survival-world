@@ -42,6 +42,9 @@ const TX_POSITION 			= 'P'
 const TX_ROTATION 			= 'R'
 const TX_SUBTYPE 			= 'S'
 const TX_ORIGIN				= 'O'
-
+const TX_PLAYER_STRAFE		= 's'
+const TX_PLAYER_IWR			= 'w'
+const TX_PLAYER_AIM			= 'a'
+const TX_PLAYER_ROLL		= 'o'
 const ORIGIN_SQL			= 0
 const ORIGIN_BASEMAP		= 1

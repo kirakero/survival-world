@@ -24,8 +24,10 @@ func run(delta):
 		bufferout = 0
 	last_pos = Global.CLI.player.translation
 
-	Global.CLI.objects[ Global.NET.my_id ][ Def.TX_POSITION ] = last_pos
-	Global.CLI.objects[ Global.NET.my_id ][ Def.TX_ROTATION ] = Global.CLI.player.rotation
+	for k in Global.CLI.player.tx.keys():
+		Global.CLI.objects[ Global.NET.my_id ][ k ] = Global.CLI.player.tx[ k ]
+	
+#	print (Global.CLI.player.tx)
 	Global.CLI.objects[ Global.NET.my_id ][ Def.TX_UPDATED_AT ] = Global.CLI.time.now()
 	Global.NET.txp( [ Global.CLI.objects[ Global.NET.my_id ] ], 1, Global.NET.INTENT_SERVER )
 	

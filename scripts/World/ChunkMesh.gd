@@ -43,14 +43,15 @@ func load_gameob(_data):
 			obj.init( id, self )
 		Def.TYPE_PLAYER:
 			obj = preload("res://assets/OtherPlayer.tscn").instance()
+			obj.name = str('p',id)
 			obj.init( id, self )
 			
-	call_deferred("add_child", obj)
-	call_deferred('load_done', thread)
+	call_deferred('load_done', thread, obj)
 
-func load_done(thread):
+func load_done(thread, obj):
 	thread.wait_to_finish()
 	Global.CLI.chunk_mutex.lock()
+	call_deferred("add_child", obj)
 	Global.CLI.chunk_threads.append(thread)
 	Global.CLI.chunk_mutex.unlock()
 

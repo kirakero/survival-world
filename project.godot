@@ -259,8 +259,8 @@ gdscript/warnings/unsafe_call_argument=true
 
 [display]
 
-window/size/width=1920
-window/size/height=1080
+window/size/width=1200
+window/size/height=960
 
 [editor_plugins]
 

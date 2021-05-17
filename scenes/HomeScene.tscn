@@ -29,8 +29,8 @@ __meta__ = {
 }
 
 [node name="TabContainer" type="TabContainer" parent="MarginContainer"]
-margin_right = 576.0
-margin_bottom = 756.0
+margin_right = 360.0
+margin_bottom = 672.0
 custom_fonts/font = ExtResource( 2 )
 tab_align = 0
 

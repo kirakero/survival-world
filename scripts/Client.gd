@@ -27,7 +27,7 @@ var time
 signal client_loaded
 signal chunk_queue_empty
 
-func _init( _character, _host = null, _password = null, _port = 2480 ):
+func _init( _character, _host = null, _password = null, _port = 2456 ):
 	character = _character
 	host = _host
 	password = _password
@@ -132,6 +132,10 @@ func load_scene():
 		Def.TX_ROTATION: Vector3.ZERO,
 		Def.TX_FOCUS: Global.NET.my_id,
 		Def.TX_TYPE: Def.TYPE_PLAYER,
+		Def.TX_PLAYER_AIM: 1,
+		Def.TX_PLAYER_ROLL: false,
+		Def.TX_PLAYER_STRAFE: Vector2.ZERO ,
+		Def.TX_PLAYER_IWR: -1,
 		Def.TX_UPDATED_AT: Global.CLI.time.now(),
 		Def.TX_CREATED_AT: Global.CLI.time.now(),
 	}

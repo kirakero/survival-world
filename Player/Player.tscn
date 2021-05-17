@@ -103,7 +103,7 @@ blend_point_8/pos = Vector2( -1, -1 )
 [sub_resource type="AnimationNodeTimeScale" id=22]
 
 [sub_resource type="AnimationNodeBlendTree" id=23]
-graph_offset = Vector2( -311, 398 )
+graph_offset = Vector2( -311, -24 )
 nodes/Animation/node = SubResource( 5 )
 nodes/Animation/position = Vector2( 100, 300 )
 "nodes/Animation 2/node" = SubResource( 2 )
@@ -129,7 +129,7 @@ nodes/strafe/node = SubResource( 21 )
 nodes/strafe/position = Vector2( 0, 120 )
 nodes/walk_scale/node = SubResource( 22 )
 nodes/walk_scale/position = Vector2( 100, 400 )
-node_connections = [ "output", 0, "roll", "TimeScale", 0, "strafe", "aim_transition", 0, "TimeScale", "aim_transition", 1, "iwr_blend", "iwr_blend", 0, "Animation", "iwr_blend", 1, "walk_scale", "iwr_blend", 2, "run_scale", "roll_scale", 0, "Animation 4", "run_scale", 0, "Animation 3", "walk_scale", 0, "Animation 2", "roll", 0, "aim_transition", "roll", 1, "roll_scale" ]
+node_connections = [ "output", 0, "roll", "roll", 0, "aim_transition", "roll", 1, "roll_scale", "TimeScale", 0, "strafe", "aim_transition", 0, "TimeScale", "aim_transition", 1, "iwr_blend", "iwr_blend", 0, "Animation", "iwr_blend", 1, "walk_scale", "iwr_blend", 2, "run_scale", "roll_scale", 0, "Animation 4", "run_scale", 0, "Animation 3", "walk_scale", 0, "Animation 2" ]
 
 [node name="Player" type="KinematicBody"]
 script = ExtResource( 3 )

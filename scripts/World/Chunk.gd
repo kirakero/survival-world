@@ -14,7 +14,7 @@ var ghosts: = {}
 var chunk_key
 var fully_loaded = false
 
-var allow_update = [ Def.TX_POSITION, Def.TX_ROTATION ]
+var allow_update = [ Def.TX_POSITION, Def.TX_ROTATION, Def.TX_PLAYER_AIM, Def.TX_PLAYER_IWR, Def.TX_PLAYER_ROLL, Def.TX_PLAYER_STRAFE ]
 
 var mesh
 

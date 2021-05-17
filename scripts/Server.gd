@@ -27,7 +27,7 @@ var time
 
 signal server_loaded
 
-func _init( _game, _networked = false, _password = null, _port = 2480, _max_players = 10 ):
+func _init( _game, _networked = false, _password = null, _port = 2456, _max_players = 10 ):
 	
 	game = _game
 	networked = _networked
@@ -106,7 +106,7 @@ func add_gameob(gameob: Dictionary, from, pos_x, pos_z):
 func update_gameob(gameob: Dictionary, from, pos_x, pos_z):
 	if not objects.has( gameob[ Def.TX_ID ] ) \
 		|| objects[ gameob[Def.TX_ID] ][ Def.TX_UPDATED_AT ] > gameob[ Def.TX_UPDATED_AT ]:
-		_debug('rej %s (ours %s  theirs %s)' %  [ gameob[ Def.TX_ID ], objects[ gameob[Def.TX_ID] ][ Def.TX_UPDATED_AT ] , gameob[ Def.TX_UPDATED_AT ]] )	
+		_debug('rej %s (ours %s  theirs %s)' %  [ gameob[ Def.TX_ID ], objects[ gameob[Def.TX_ID] ][ Def.TX_UPDATED_AT ] , gameob] )	
 		return false
 		
 	

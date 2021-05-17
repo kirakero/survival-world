@@ -76,6 +76,7 @@ animation = "walk_forward_left-loop"
 animation = "walk_back_left-loop"
 
 [sub_resource type="AnimationNodeBlendSpace2D" id=21]
+resource_local_to_scene = true
 blend_point_0/node = SubResource( 12 )
 blend_point_0/pos = Vector2( 0, 0 )
 blend_point_1/node = SubResource( 13 )
@@ -98,7 +99,7 @@ blend_point_8/pos = Vector2( -1, -1 )
 [sub_resource type="AnimationNodeTimeScale" id=22]
 
 [sub_resource type="AnimationNodeBlendTree" id=23]
-graph_offset = Vector2( -311, 398 )
+graph_offset = Vector2( -45.0396, 76.6874 )
 nodes/Animation/node = SubResource( 5 )
 nodes/Animation/position = Vector2( 100, 300 )
 "nodes/Animation 2/node" = SubResource( 2 )
@@ -110,7 +111,7 @@ nodes/Animation/position = Vector2( 100, 300 )
 nodes/TimeScale/node = SubResource( 6 )
 nodes/TimeScale/position = Vector2( 260, 180 )
 nodes/aim_transition/node = SubResource( 7 )
-nodes/aim_transition/position = Vector2( 440, 260 )
+nodes/aim_transition/position = Vector2( 460, 240 )
 nodes/iwr_blend/node = SubResource( 8 )
 nodes/iwr_blend/position = Vector2( 280, 360 )
 nodes/output/position = Vector2( 880, 360 )
@@ -121,12 +122,12 @@ nodes/roll_scale/position = Vector2( 500, 500 )
 nodes/run_scale/node = SubResource( 11 )
 nodes/run_scale/position = Vector2( 100, 520 )
 nodes/strafe/node = SubResource( 21 )
-nodes/strafe/position = Vector2( 0, 120 )
+nodes/strafe/position = Vector2( -40, 140 )
 nodes/walk_scale/node = SubResource( 22 )
 nodes/walk_scale/position = Vector2( 100, 400 )
 node_connections = [ "output", 0, "roll", "roll", 0, "aim_transition", "roll", 1, "roll_scale", "TimeScale", 0, "strafe", "aim_transition", 0, "TimeScale", "aim_transition", 1, "iwr_blend", "iwr_blend", 0, "Animation", "iwr_blend", 1, "walk_scale", "iwr_blend", 2, "run_scale", "roll_scale", 0, "Animation 4", "run_scale", 0, "Animation 3", "walk_scale", 0, "Animation 2" ]
 
-[node name="Player" type="KinematicBody"]
+[node name="OtherPlayer" type="KinematicBody"]
 script = ExtResource( 2 )
 __meta__ = {
 "_edit_horizontal_guides_": [  ]
@@ -155,14 +156,17 @@ anims/walk_left-loop = ExtResource( 5 )
 anims/walk_right-loop = ExtResource( 4 )
 
 [node name="AnimationTree" type="AnimationTree" parent="."]
+process_priority = -1
 tree_root = SubResource( 23 )
 anim_player = NodePath("../AnimationPlayer")
 active = true
 parameters/TimeScale/scale = 1.5
-parameters/aim_transition/current = 0
+parameters/aim_transition/current = 1
 parameters/iwr_blend/blend_amount = -1.0
 parameters/roll/active = false
 parameters/roll_scale/scale = 1.0
 parameters/run_scale/scale = 1.0
-parameters/strafe/blend_position = Vector2( -0.00126106, 0 )
-parameters/walk_scale/scale = 1.5
+parameters/strafe/blend_position = Vector2( 0, 0 )
+parameters/walk_scale/scale = 1.0
+
+[connection signal="ready" from="AnimationPlayer" to="." method="_on_AnimationPlayer_ready"]
