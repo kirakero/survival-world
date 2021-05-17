@@ -63,6 +63,9 @@ func _physics_process(delta):
 			else:
 				lat = 1000
 		
+		# chunk update
+		
+		
 		state_buffer.remove(0)
 	
 	if state_buffer.size() < 2:

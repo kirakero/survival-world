@@ -46,6 +46,7 @@ func _ready():
 
 func _input(event):
 	
+	
 	if event is InputEventMouseMotion:
 		aim_turn = -event.relative.x * 0.015 #animates player with mouse movement while aiming (used in line 104)
 	
@@ -70,8 +71,17 @@ func _input(event):
 				$AnimationTree.set("parameters/aim_transition/current", 1)
 				$roll_timer.start()
 
+var out = false
 func _physics_process(delta):
-	
+	if Input.is_action_just_pressed("debug_zoom_out"):
+		if not out:
+			$Camroot/h/v.translation = Vector3(0, 64, 0)
+			$Camroot/h/v/Camera.far = 256
+		else:
+			$Camroot/h/v.translation = Vector3(0, 1.415, 0)
+			$Camroot/h/v/Camera.far = 128
+		out = !out
+		
 	if !$roll_timer.is_stopped():
 		acceleration = 3.5
 	else:
