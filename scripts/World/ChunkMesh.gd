@@ -8,34 +8,135 @@ var chunk_size
 var should_remove = true 
 var chunk_basic setget set_chunkbasic
 var load_queue = []
-
+var loading_queue = []
+var lod = 3
+var lods = [64, 96, 320, 1024]
+var trans_lod = null
+var counter = 0.0
+var processing = false
+var objects
+var load_mutex
 func _init():
+	load_mutex = Mutex.new()
 	pass
 	
 
 func _ready():
-	var objects = Global.CLI.chunks[ chunk_basic.chunk_key ].my_objects.duplicate()
-	for ob in objects:
-		Global.CLI._debug('spawn check %s' % ob)
-		if Global.CLI.objects[ ob ][ Def.TX_TYPE ] == Def.TYPE_RESOURCE \
-		or Global.CLI.objects[ ob ][ Def.TX_TYPE ] == Def.TYPE_PLAYER and ob != Global.NET.my_id:
-			Global.CLI._debug('will spawn %s' % ob)
-			load_queue.append( ob )
+	
+	pass
+
 
 func _physics_process(delta):
+	counter += delta
+	if counter > 0.1 and not processing:
+		counter = 0
+		processing = true
+		# LOD
+		var distance = (Global.CLI.player.translation * Vector3(1,0,1) ).distance_to( translation)
+		var new_lod = 0
+		while( distance > lods[new_lod] ):
+			new_lod += 1
+		var trans_lod = lod
+		if (new_lod != lod):
+			var amount = new_lod - lod
+			amount = amount / abs(amount) #normalize
+			trans_lod += amount
+		
+		call_deferred("lod_%s" % trans_lod)		
+
+# Entering these functions does not imply lod = lod_?
+func lod_0():
+	if lod == 0:
+		process_load_queue()
+	else:
+		print ("%s lod 1 >> 0" % chunk_basic.chunk_key)
+	lod = 0
+	processing = false
+
+func lod_1():
+	if lod == 0:
+		print ("%s lod 0 >> 1" % chunk_basic.chunk_key)
+		# for now nothing
+		pass
+		
+	elif lod == 1:
+		# process the queue
+		process_load_queue()
+		
+	elif lod == 2:
+		# load all the stuff
+		print ("%s lod 2 >> 1" % chunk_basic.chunk_key)
+		var objects = Global.CLI.chunks[ chunk_basic.chunk_key ].my_objects.duplicate()
+		for ob in objects:
+			Global.CLI._debug('spawn check %s' % ob)
+			if Global.CLI.objects[ ob ][ Def.TX_TYPE ] == Def.TYPE_RESOURCE \
+			or Global.CLI.objects[ ob ][ Def.TX_TYPE ] == Def.TYPE_PLAYER \
+			and ob != Global.NET.my_id \
+			and not load_queue.has( ob ) and not loading_queue.has( ob ):
+				Global.CLI._debug('will spawn %s' % ob)
+				load_queue.append( ob )
 	
+	lod = 1
+	processing = false
+
+func lod_2():
+	if lod == 1:
+		# we need to remove all loaded game objects
+		print ("%s lod 1 >> 2" % chunk_basic.chunk_key)
+		if objects:
+			load_mutex.lock()
+			load_queue.empty()
+			loading_queue.empty()
+			load_mutex.unlock()
+			remove_objects()
+			add_object_container()
+	
+	elif lod == 3:
+		print ("%s lod 3 >> 2" % chunk_basic.chunk_key)
+		# we are entering LOD 2 for the first time
+		if not objects:
+			add_object_container()
+	
+	lod = 2
+	processing = false
+	
+	
+func lod_3():	
+	# unload all
+	print ('unloading %s' % chunk_basic.chunk_key)
+	Global.CLI.loaded_ref.erase( chunk_basic.chunk_key )
+	Global.CLI.loaded_chunks.erase( chunk_basic.chunk_key )
+	queue_free()
+
+func process_load_queue():
 	if load_queue.size() == 0 or Global.CLI.chunk_threads.size() == 0:
 		return
 
 	Global.CLI.chunk_mutex.lock()
+	load_mutex.lock()
 	var id = load_queue.pop_back()
+	loading_queue.append( id )
+	load_mutex.unlock()
 	var thread: Thread = Global.CLI.chunk_threads.pop_back()
 	Global.CLI.chunk_mutex.unlock()
 	thread.start(self, "load_gameob", [id, thread])
 
+func add_object_container():
+	objects = Spatial.new()
+	add_child(objects)
+
+func remove_objects():
+	if objects:
+		objects.queue_free()
+		objects = null
+		
 func load_gameob(_data):
 	var id = _data[0]
 	var thread = _data[1]
+	if lod > 1:
+		# we interrupt loading because the LOD is not in a good state
+		call_deferred('load_done', thread, null)
+		return	
 	var obj
 	match Global.CLI.objects[ id ][ Def.TX_TYPE ]:
 		Def.TYPE_RESOURCE:
@@ -46,12 +147,19 @@ func load_gameob(_data):
 			obj.name = str('p',id)
 			obj.init( id, self )
 			
-	call_deferred('load_done', thread, obj)
+	call_deferred('load_done', thread, [id, obj])
 
-func load_done(thread, obj):
+func load_done(thread, data):
+	var id = data[0]
+	var obj = data[1]
 	thread.wait_to_finish()
 	Global.CLI.chunk_mutex.lock()
-	call_deferred("add_child", obj)
+	if loading_queue.has( id ) and objects:
+		# we only want to add the object if we are still in an acceptable LOD
+		objects.add_child(obj)
+		load_mutex.lock()
+		loading_queue.erase( id )
+		load_mutex.unlock()
 	Global.CLI.chunk_threads.append(thread)
 	Global.CLI.chunk_mutex.unlock()
 

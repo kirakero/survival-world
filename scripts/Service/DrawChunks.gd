@@ -67,15 +67,8 @@ func update(pos):
 	var wanted = Global.DATA.chunkkeys_circle( pos )
 	
 	for loaded in Global.CLI.loaded_chunks.keys():
-		if not wanted.has(loaded) \
-		and Global.CLI.loaded_chunks[ loaded ].distance_to( pos ) > Global.DATA.config['max_range_chunk'] * 1.25:
-			# CHUNK UNLOAD
-			Global.CLI.loaded_ref[ loaded ].queue_free()
-			Global.CLI.loaded_ref.erase( loaded )
-			Global.CLI.loaded_chunks.erase( loaded )
-		else:
-			# CHUNK IGNORE (already loaded)
-			wanted.erase( loaded )
+		# CHUNK IGNORE (already loaded)
+		wanted.erase( loaded )
 	
 	# CHUNK IGNORE (already loading)
 	for loading in Global.CLI.loading_chunks.keys():
@@ -134,7 +127,6 @@ func render_done(key, thread, mesh_chunk):
 	mutex.unlock()
 	self.call_deferred('render_process')
 	scene.call_deferred('add_child', mesh_chunk)
-	print('render %s complete'%mesh_chunk.name)
 
 
 

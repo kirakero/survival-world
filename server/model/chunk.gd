@@ -68,6 +68,9 @@ func first(position: Vector2):
 	var query = "pos_x = '%s' and pos_y = '%s'" % [position.x, position.y]
 	var res = db.select_rows(TABLE, query, ["*"])
 	if res.size():
+		
+		var rng = RandomNumberGenerator.new()
+		rng.randomize()
 		return {
 			Def.TX_ID: Fun.make_chunk_key(position.x, position.y),
 			Def.TX_TYPE: Def.TYPE_CHUNK,
@@ -75,7 +78,7 @@ func first(position: Vector2):
 			Def.TX_UPDATED_AT: Global.SRV.time.now(),
 			Def.TX_CREATED_AT: Global.SRV.time.now(),
 			Def.TX_CHUNK_DATA: res[0]['chunk'],
-			Def.TX_OBJECT_DATA: PoolByteArray([127, 127, 1]),
+			Def.TX_OBJECT_DATA: PoolByteArray([rng.randi_range(0, 255), rng.randi_range(0, 255), 1, 0, rng.randi_range(0, 255), rng.randi_range(0, 255), 1, 0, rng.randi_range(0, 255), rng.randi_range(0, 255), 1, 0, rng.randi_range(0, 255), rng.randi_range(0, 255), 1, 0, rng.randi_range(0, 255), rng.randi_range(0, 255), 1, 0,]),
 		}
 	return {
 		Def.TX_ID: Fun.make_chunk_key(position.x, position.y),

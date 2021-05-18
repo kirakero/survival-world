@@ -88,8 +88,8 @@ func generate_heights():
 func load_all():
 	for obj in range(0, obdata.size(), 4):
 		var pos = Vector3.ZERO
-		pos.x = obdata[obj + 0] / chunk_size
-		pos.z = obdata[obj + 1] / chunk_size
+		pos.x = obdata[obj + 0] / 255.0 * chunk_size
+		pos.z = obdata[obj + 1] / 255.0 * chunk_size
 		pos.y = height_from_local( pos ).y
 		pos = pos + world_position
 		
