@@ -12,6 +12,8 @@ var SRV = null
 signal scene_loaded
 signal scene_prepared
 
+var printnexttxr = false
+
 # api and provider basically always needs to be available
 func _init():	
 	DATA = DataLayer.new()	

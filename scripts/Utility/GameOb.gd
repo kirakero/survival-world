@@ -15,6 +15,7 @@ func init( _id, _chunk ):
 	chunk = _chunk
 	Global.CLI.objects[ id ][ Def.REF ] = self
 	translation = Global.CLI.objects[ id ][ Def.TX_POSITION ] - chunk.translation
+	print ([' +++ %s ' % _id, Global.CLI.objects[ id ][ Def.TX_POSITION ] , chunk.translation ])
 
 # called when the GameOb receives an update
 func on_rx_change():

@@ -24,7 +24,6 @@ func txp(data, to, intent: int):
 remote func rxs(data: Array):
 	var sender_id = get_tree().get_rpc_sender_id()
 	# ingest the data
-#	_debug("rx-r (from %s) %s" % [sender_id, to_json(data)] )
 	for item in data[0]:
 		ingest( item, sender_id, 'add', data[1] )
 	
@@ -39,7 +38,6 @@ remote func rxs_partial(data: Array):
 func ingest(gameob: Dictionary, from, method, intent):
 	# determine the chunk key
 	var pos = Global.DATA.get_chunk_pos(gameob[ Def.TX_POSITION ])
-
 	# CLI
 	if Global.CLI and intent & INTENT_CLIENT == INTENT_CLIENT:
 		Global.CLI.call("%s_gameob" % method, gameob, from, pos.x, pos.z)

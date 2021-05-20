@@ -78,7 +78,7 @@ func first(position: Vector2):
 			Def.TX_UPDATED_AT: Global.SRV.time.now(),
 			Def.TX_CREATED_AT: Global.SRV.time.now(),
 			Def.TX_CHUNK_DATA: res[0]['chunk'],
-			Def.TX_OBJECT_DATA: PoolByteArray([rng.randi_range(0, 255), rng.randi_range(0, 255), 1, 0, rng.randi_range(0, 255), rng.randi_range(0, 255), 1, 0, rng.randi_range(0, 255), rng.randi_range(0, 255), 1, 0, rng.randi_range(0, 255), rng.randi_range(0, 255), 1, 0, rng.randi_range(0, 255), rng.randi_range(0, 255), 1, 0,]),
+			Def.TX_OBJECT_DATA: PoolByteArray([64, 64, 1, 0, 192,192, 1, 0, 64,192, 1, 0, 192,64, 1, 0]),
 		}
 	return {
 		Def.TX_ID: Fun.make_chunk_key(position.x, position.y),

@@ -9,6 +9,8 @@ var should_remove = true
 var chunk_basic setget set_chunkbasic
 var load_queue = []
 var loading_queue = []
+var loaded = []
+var loaded_time = 0
 var lod = 3
 var lods = [64, 96, 320, 1024]
 var trans_lod = null
@@ -16,6 +18,7 @@ var counter = 0.0
 var processing = false
 var objects
 var load_mutex
+var will_draw = [ Def.TYPE_RESOURCE, Def.TYPE_PLAYER ]
 func _init():
 	load_mutex = Mutex.new()
 	pass
@@ -32,7 +35,7 @@ func _physics_process(delta):
 		counter = 0
 		processing = true
 		# LOD
-		var distance = (Global.CLI.player.translation * Vector3(1,0,1) ).distance_to( translation)
+		var distance = (Global.CLI.player.translation * Vector3(1,0,1) ).distance_to( translation )
 		var new_lod = 0
 		while( distance > lods[new_lod] ):
 			new_lod += 1
@@ -44,10 +47,37 @@ func _physics_process(delta):
 		
 		call_deferred("lod_%s" % trans_lod)		
 
+func queue_new_objects():
+	var recent_time = Global.CLI.objects[ Global.CLI.chunks[ chunk_basic.chunk_key ].my_objects[ \
+			Global.CLI.chunks[ chunk_basic.chunk_key ].my_objects.size() - 1 \
+		] ][ Def.TX_UPDATED_AT ]
+	if loaded_time == recent_time:
+			return
+			
+	var objects: Array = Global.CLI.chunks[ chunk_basic.chunk_key ].my_objects.duplicate()
+	var orig_loaded_time = loaded_time
+	loaded_time = recent_time
+	while (objects.size()):
+		var ob = objects.pop_back()
+		if will_draw.has(Global.CLI.objects[ ob ][ Def.TX_TYPE ]) \
+		and orig_loaded_time < Global.CLI.objects[ ob ][ Def.TX_UPDATED_AT ] \
+		and str(ob) != str(Global.NET.my_id) \
+		and not load_queue.has( ob ) \
+		and not loading_queue.has( ob ) \
+		and not loaded.has( ob ):
+			Global.CLI._debug('%s will spawn %s' % [name, ob])
+			load_queue.append( ob )
+		else:
+			print(load_queue.has( ob ) , loading_queue.has( ob ) , loaded.has( ob ) )
+			Global.CLI._debug('%s NO SPAWN %s' % [name, ob])
+		
+
 # Entering these functions does not imply lod = lod_?
 func lod_0():
 	if lod == 0:
 		process_load_queue()
+		
+		queue_new_objects()
 	else:
 		print ("%s lod 1 >> 0" % chunk_basic.chunk_key)
 	lod = 0
@@ -63,18 +93,25 @@ func lod_1():
 		# process the queue
 		process_load_queue()
 		
+		# check to see if we have new stuffs
+		queue_new_objects()
 	elif lod == 2:
 		# load all the stuff
 		print ("%s lod 2 >> 1" % chunk_basic.chunk_key)
-		var objects = Global.CLI.chunks[ chunk_basic.chunk_key ].my_objects.duplicate()
-		for ob in objects:
-			Global.CLI._debug('spawn check %s' % ob)
-			if Global.CLI.objects[ ob ][ Def.TX_TYPE ] == Def.TYPE_RESOURCE \
-			or Global.CLI.objects[ ob ][ Def.TX_TYPE ] == Def.TYPE_PLAYER \
-			and ob != Global.NET.my_id \
-			and not load_queue.has( ob ) and not loading_queue.has( ob ):
-				Global.CLI._debug('will spawn %s' % ob)
-				load_queue.append( ob )
+		# check to see if we have new stuffs
+		queue_new_objects()
+#		var objects = Global.CLI.chunks[ chunk_basic.chunk_key ].my_objects.duplicate()
+#		for ob in objects:
+#			Global.CLI._debug('spawn check %s' % ob)
+#			if Global.CLI.objects[ ob ][ Def.TX_TYPE ] == Def.TYPE_RESOURCE \
+#			or Global.CLI.objects[ ob ][ Def.TX_TYPE ] == Def.TYPE_PLAYER \
+#			and ob != Global.NET.my_id \
+#			and not load_queue.has( ob ) and not loading_queue.has( ob ):
+#				Global.CLI._debug('%s will spawn %s' % [name, ob])
+#				load_queue.append( ob )
+#			else:
+#				Global.CLI._debug('%s NO SPAWN %s' % [name, ob])
+#			loaded_time = Global.CLI.objects[ ob ][ Def.TX_UPDATED_AT ]
 	
 	lod = 1
 	processing = false
@@ -84,10 +121,6 @@ func lod_2():
 		# we need to remove all loaded game objects
 		print ("%s lod 1 >> 2" % chunk_basic.chunk_key)
 		if objects:
-			load_mutex.lock()
-			load_queue.empty()
-			loading_queue.empty()
-			load_mutex.unlock()
 			remove_objects()
 			add_object_container()
 	
@@ -111,7 +144,11 @@ func lod_3():
 func process_load_queue():
 	if load_queue.size() == 0 or Global.CLI.chunk_threads.size() == 0:
 		return
-
+	
+	if name =='@@201':
+		print ('-===== start')
+		print (loading_queue, load_queue, loaded)
+		print ('-=====-')
 	Global.CLI.chunk_mutex.lock()
 	load_mutex.lock()
 	var id = load_queue.pop_back()
@@ -127,7 +164,14 @@ func add_object_container():
 
 func remove_objects():
 	if objects:
+		print('empty ', name)
 		objects.queue_free()
+		load_mutex.lock()
+		load_queue = []
+		loading_queue = []
+		loaded_time = 0
+		loaded = []
+		load_mutex.unlock()
 		objects = null
 		
 func load_gameob(_data):
@@ -159,7 +203,12 @@ func load_done(thread, data):
 		objects.add_child(obj)
 		load_mutex.lock()
 		loading_queue.erase( id )
+		if name =='@@201':
+			print ('-===== fin', id)
+		loaded.append( id )
 		load_mutex.unlock()
+	else:
+		print('obj is getting tossed ', id)
 	Global.CLI.chunk_threads.append(thread)
 	Global.CLI.chunk_mutex.unlock()
 

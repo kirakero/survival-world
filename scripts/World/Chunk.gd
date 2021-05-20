@@ -118,9 +118,13 @@ func load_all():
 func add(gameob: Dictionary, internal = false):
 	assert(gameob.has(Def.TX_CREATED_AT))
 	assert(gameob.has(Def.TX_UPDATED_AT))
+	if ( my_objects.has( gameob[Def.TX_ID] ) ):
+		container._debug('trying to re-add object')
+		assert(not my_objects.has( gameob[Def.TX_ID] ))
 	gameob[ Def.QUAD ] = chunk_key
 	container.objects[ gameob[Def.TX_ID] ] = gameob
 	my_objects.append( gameob[Def.TX_ID] )
+
 		
 func update(gameob: Dictionary, is_entering, internal = false):
 	assert(gameob.has(Def.TX_UPDATED_AT))
@@ -131,7 +135,7 @@ func update(gameob: Dictionary, is_entering, internal = false):
 	if my_objects.has( gameob[ Def.TX_ID ] ):
 		my_objects.erase( gameob[ Def.TX_ID ] )
 	my_objects.append( gameob[ Def.TX_ID ] )
-
+	assert(my_objects.find(gameob[ Def.TX_ID ]) == my_objects.find_last(gameob[ Def.TX_ID ]))
 	container.objects[ gameob[ Def.TX_ID ] ][ Def.QUAD ] = chunk_key
 
 	
@@ -203,7 +207,7 @@ func bifurcated_delta(since, exclude):
 		if gameob.has( Def.TX_FOCUS ) and gameob[ Def.TX_FOCUS ] == exclude:
 			continue
 		# we've hit the point where objects no longer need to be synced
-		if gameob[ Def.TX_UPDATED_AT ] < since:
+		if gameob[ Def.TX_UPDATED_AT ] <= since:
 			break
 
 		gameob.erase( Def.QUAD )

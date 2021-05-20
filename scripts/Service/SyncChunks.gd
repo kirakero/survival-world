@@ -37,6 +37,9 @@ func send_chunks( id, pos: Vector2 ):
 			var chunk = Global.SRV.get_chunk( wanted_chunks[ wanted ].x, wanted_chunks[ wanted ].z )
 			if chunk.fully_loaded:
 				var res = chunk.bifurcated_delta( player['chunks'][ wanted ][ 1 ], id )
+
+				print (' SERVER SYNC: ', wanted,  [res['txr'].size(), player['chunks'][ wanted ][ 1 ], id])
+				print (res['txr'])
 				# RPC RELIABLE - NEW OBJECTS
 				# send them right away to minimize the chance subpub are missed
 				Global.NET.txr( res['txr'], id, Global.NET.INTENT_CLIENT ) 

@@ -45,9 +45,13 @@ func chunkkeys_circle(pos: Vector3):
 	return out
 
 func get_chunk_pos( translation: Vector3 ):
-	var pos = (translation / config['chunk_size']).round() * config['chunk_size']
-	pos.y = 0
-	return pos
+	return Vector3(
+		floor(translation.x / config['chunk_size']) * config['chunk_size'],
+		0,
+		floor(translation.z / config['chunk_size']) * config['chunk_size']
+	)
+
+#	return pos
 
 func qt_circle(pos_x, pos_z) -> QuadTree:
 	var qt = qt_empty()

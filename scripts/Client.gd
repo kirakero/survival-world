@@ -67,8 +67,14 @@ func add_gameob(gameob: Dictionary, from, pos_x, pos_z):
 	get_chunk(pos_x, pos_z).add( gameob, from == 0 )
 	var key = Fun.make_chunk_key(pos_x, pos_z)
 
-	if loaded_ref.has( key ):
-		loaded_ref[ key ].load_queue.append( gameob[ Def.TX_ID ])
+	if key == '-448,64':
+		_debug(' $$$ Add %s to %s' % [ gameob[Def.TX_ID], key ])
+		return true
+#	if loaded_ref.has( key ):
+#		_debug('Add %s to load queue' % key)
+#		loaded_ref[ key ].load_queue.append( gameob[ Def.TX_ID ])
+#
+#	_debug('No ref load %s' % gameob[ Def.TX_ID ])
 
 	
 func update_gameob(gameob: Dictionary, from, pos_x, pos_z):
